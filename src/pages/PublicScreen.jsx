@@ -133,7 +133,12 @@ export default function PublicScreen() {
                 </div>
                 <p className="text-white/40">{currentTime.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
                 <div className="mt-12 text-white/30 text-lg animate-pulse">Esperando escaneo QR...</div>
-              </div>
+              <button
+                onClick={() => showScanResult({ client_name: "Cliente Prueba", scan_result: "success", remaining_accesses: 0 })}
+                className="mt-6 px-6 py-3 bg-red-600/30 border border-red-500/50 rounded-xl text-red-400 text-sm hover:bg-red-600/50 transition-colors">
+                🧪 Probar Acceso Denegado
+              </button>
+            </div>
             )}
             {slideshowImages.length > 0 && (
               <div className="absolute bottom-8 text-white/50 text-xl animate-pulse">Esperando escaneo QR...</div>
