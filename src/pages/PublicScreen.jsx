@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const SCAN_DISPLAY_TIMEOUT = 7000; // 7 segundos
 
 export default function PublicScreen() {
   const [lastScan, setLastScan] = useState(null);
@@ -47,7 +48,10 @@ export default function PublicScreen() {
     setLastScan(attendanceData);
     setShowIdle(false);
     clearTimeout(idleTimer.current);
-    startIdleTimer();
+    idleTimer.current = setTimeout(() => {
+      setLastScan(null);
+      setShowIdle(true);
+    }, SCAN_DISPLAY_TIMEOUT);
   }
 
   function startIdleTimer() {
@@ -87,10 +91,21 @@ export default function PublicScreen() {
       icon: "🚫",
       label: "CÓDIGO INVÁLIDO",
       border: "border-[#FF3B3B]/30"
+    },
+    denied: {
+      bg: "from-[#0B0B0B] via-[#1f0000] to-[#0B0B0B]",
+      accent: "#FF3B3B",
+      glow: "0 0 80px rgba(255,59,59,0.3)",
+      icon: "⛔",
+      label: "ACCESO DENEGADO",
+      border: "border-[#FF3B3B]/30"
     }
   };
 
-  const cfg = lastScan ? (resultConfig[lastScan.scan_result] || resultConfig.success) : null;
+  const effectiveResult = lastScan?.scan_result === "success" && lastScan?.remaining_accesses === 0
+    ? "denied"
+    : lastScan?.scan_result;
+  const cfg = lastScan ? (resultConfig[effectiveResult] || resultConfig.success) : null;
 
   return (
     <div className="fixed inset-0 bg-[#0B0B0B] overflow-hidden select-none">
