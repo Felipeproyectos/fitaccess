@@ -37,8 +37,9 @@ Deno.serve(async (req) => {
           <h1 style="color: #FF3B3B; margin-bottom: 8px;">FitAccess</h1>
           <h2 style="color: #fff;">Hola ${client.name} 👋</h2>
           <p style="color: #aaa;">Aquí está tu código QR de acceso al gimnasio.</p>
-          <div style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
-            <p style="color: #000; font-size: 13px; font-family: monospace; word-break: break-all;">${qr.token}</p>
+          <div style="background: #fff; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr.token)}&format=png&margin=10" alt="QR Code" style="width:200px;height:200px;display:block;margin:0 auto 12px auto;" />
+            <p style="color: #333; font-size: 12px; font-family: monospace; word-break: break-all; margin:0;">${qr.token}</p>
           </div>
           <p style="color: #aaa; font-size: 13px;"><strong>Plan:</strong> ${planName}</p>
           ${endDate ? `<p style="color: #aaa; font-size: 13px;"><strong>Válido hasta:</strong> ${endDate}</p>` : ''}

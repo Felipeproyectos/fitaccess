@@ -121,10 +121,11 @@ Deno.serve(async (req) => {
             <p style="margin:0 0 16px 0;color:#fff;font-size:18px;font-weight:bold;">${plan.name}</p>
             ${planDetails}
           </div>
-          <div style="background:#1a1a1a;border-radius:8px;padding:20px;margin-bottom:24px;border:1px solid #333;">
-            <p style="margin:0 0 12px 0;color:#aaa;font-size:14px;">Tu código de acceso único:</p>
-            <p style="background:#000;padding:12px;border-radius:6px;font-family:monospace;font-size:14px;color:#22FF88;word-break:break-all;margin:0;">${token}</p>
-            <p style="margin:8px 0 0 0;color:#666;font-size:12px;">Presenta este código en la entrada del gimnasio</p>
+          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:24px;text-align:center;">
+            <p style="margin:0 0 12px 0;color:#333;font-size:14px;">Tu código QR de acceso:</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(token)}&format=png&margin=10" alt="QR Code" style="width:200px;height:200px;display:block;margin:0 auto 12px auto;" />
+            <p style="background:#f4f4f4;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;color:#333;word-break:break-all;margin:0;">${token}</p>
+            <p style="margin:8px 0 0 0;color:#999;font-size:12px;">Presenta este código en la entrada del gimnasio</p>
           </div>
           <p style="color:#666;font-size:12px;text-align:center;">FitAccess — Control inteligente de acceso</p>
         </div>
