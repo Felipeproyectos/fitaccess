@@ -20,6 +20,17 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   });
   const [creatingMembership, setCreatingMembership] = useState(false);
   const [membershipResult, setMembershipResult] = useState(null);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState(null);
+
+  async function resendQR() {
+    setResending(true);
+    setResendMsg(null);
+    const res = await base44.functions.invoke('resendQR', { client_id: client.id });
+    setResending(false);
+    setResendMsg(res.data?.success ? { ok: true, text: `QR enviado a ${res.data.email}` } : { ok: false, text: res.data?.error || 'Error al enviar' });
+    setTimeout(() => setResendMsg(null), 4000);
+  }
 
   useEffect(() => {
     async function load() {
@@ -138,6 +149,13 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               bgColor="#ffffff"
             />
             <p className="text-xs text-gray-400 font-mono">{qrCodes[0].token?.slice(0, 20)}...</p>
+            <button onClick={resendQR} disabled={resending}
+              className="text-xs text-primary underline disabled:opacity-50">
+              {resending ? 'Enviando...' : '📧 Reenviar QR por email'}
+            </button>
+            {resendMsg && (
+              <p className={`text-xs font-medium ${resendMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{resendMsg.text}</p>
+            )}
           </div>
         )}
         {!loading && qrCodes.length === 0 && (
