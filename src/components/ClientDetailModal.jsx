@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2 } from "lucide-react";
+import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,10 +127,26 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
           </div>
         )}
 
-        {qrCodes.length > 0 && qrCodes[0].qr_image_url && (
-          <div className="flex flex-col items-center gap-3 p-4 bg-white rounded-xl">
-            <img src={qrCodes[0].qr_image_url} alt="QR Code" className="w-40 h-40 object-contain" />
-            <p className="text-xs text-gray-500 font-mono">{qrCodes[0].token?.slice(0, 16)}...</p>
+        {!loading && qrCodes.length > 0 && qrCodes[0].token && (
+          <div className="flex flex-col items-center gap-3 p-5 bg-white rounded-2xl">
+            <QRCodeSVG
+              value={qrCodes[0].token}
+              size={180}
+              level="H"
+              includeMargin={false}
+              fgColor="#000000"
+              bgColor="#ffffff"
+            />
+            <p className="text-xs text-gray-400 font-mono">{qrCodes[0].token?.slice(0, 20)}...</p>
+          </div>
+        )}
+        {!loading && qrCodes.length === 0 && (
+          <div className="flex items-center gap-3 p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl">
+            <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-yellow-400">Sin QR activo</p>
+              <p className="text-xs text-muted-foreground">Este cliente no tiene un código QR vigente. Crea una nueva membresía para generarlo.</p>
+            </div>
           </div>
         )}
 
