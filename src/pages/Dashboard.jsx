@@ -1,0 +1,127 @@
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Users, Activity, AlertTriangle, TrendingUp, Clock } from "lucide-react";
+import { format } from "date-fns";
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({ todayAttendance: 0, activeClients: 0, expiringClients: 0, pendingPayments: 0 });
+  const [recentAttendance, setRecentAttendance] = useState([]);
+  const [expiringClients, setExpiringClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    setLoading(true);
+    const today = format(new Date(), "yyyy-MM-dd");
+    const [attendances, memberships, payments] = await Promise.all([
+      base44.entities.Attendance.filter({ date: today }, "-created_date", 10),
+      base44.entities.Membership.filter({ status: "active" }),
+      base44.entities.Payment.filter({ confirmed: false })
+    ]);
+
+    const expiring = memberships.filter(m => m.status === "expiring" || (m.remaining_accesses !== undefined && m.remaining_accesses <= 3));
+    
+    setStats({
+      todayAttendance: attendances.length,
+      activeClients: memberships.length,
+      expiringClients: expiring.length,
+      pendingPayments: payments.length
+    });
+    setRecentAttendance(attendances.slice(0, 8));
+    setExpiringClients(expiring.slice(0, 5));
+    setLoading(false);
+  }
+
+  const statCards = [
+    { label: "Asistencias Hoy", value: stats.todayAttendance, icon: Activity, color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20" },
+    { label: "Clientes Activos", value: stats.activeClients, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
+    { label: "Por Vencer", value: stats.expiringClients, icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
+    { label: "Pagos Pendientes", value: stats.pendingPayments, icon: TrendingUp, color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20" },
+  ];
+
+  return (
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">{format(new Date(), "EEEE, d 'de' MMMM yyyy")}</p>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-xl bg-card animate-pulse" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((s) => (
+            <div key={s.label} className={`rounded-xl border ${s.border} ${s.bg} p-5 flex flex-col gap-3`}>
+              <div className={`w-10 h-10 rounded-lg ${s.bg} border ${s.border} flex items-center justify-center`}>
+                <s.icon className={`w-5 h-5 ${s.color}`} />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white">{s.value}</p>
+                <p className="text-sm text-muted-foreground">{s.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-primary" /> Asistencias Recientes
+          </h2>
+          {recentAttendance.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No hay asistencias hoy.</p>
+          ) : (
+            <div className="space-y-2">
+              {recentAttendance.map((a) => (
+                <div key={a.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-white">{a.client_name}</p>
+                    <p className="text-xs text-muted-foreground">{a.date}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    a.scan_result === "success" ? "bg-green-400/20 text-green-400" :
+                    a.scan_result === "expiring" ? "bg-orange-400/20 text-orange-400" :
+                    "bg-red-400/20 text-red-400"
+                  }`}>
+                    {a.scan_result === "success" ? "✅ OK" : a.scan_result === "expiring" ? "⚠️ Por vencer" : "❌ Vencida"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-400" /> Clientes Por Vencer
+          </h2>
+          {expiringClients.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No hay clientes por vencer.</p>
+          ) : (
+            <div className="space-y-2">
+              {expiringClients.map((m) => (
+                <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-white">{m.plan_name}</p>
+                    <p className="text-xs text-muted-foreground">Vence: {m.end_date}</p>
+                  </div>
+                  {m.remaining_accesses !== undefined && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-orange-400/20 text-orange-400 font-medium">
+                      {m.remaining_accesses} accesos
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

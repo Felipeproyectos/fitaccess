@@ -1,0 +1,53 @@
+{
+  "name": "MembershipPlan",
+  "type": "object",
+  "properties": {
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Nombre del Plan"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "unlimited",
+        "limited",
+        "weekly",
+        "monthly",
+        "custom"
+      ],
+      "title": "Tipo"
+    },
+    "duration_days": {
+      "type": "number",
+      "title": "Duraci\u00f3n en D\u00edas"
+    },
+    "max_accesses": {
+      "type": "number",
+      "title": "Accesos M\u00e1ximos"
+    },
+    "price": {
+      "type": "number",
+      "title": "Precio"
+    },
+    "description": {
+      "type": "string",
+      "title": "Descripci\u00f3n"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "gym_id",
+    "type",
+    "duration_days",
+    "price"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Gym",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nombre del Gimnasio"
+    },
+    "logo_url": {
+      "type": "string",
+      "title": "Logo URL"
+    },
+    "address": {
+      "type": "string",
+      "title": "Direcci\u00f3n"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "slideshow_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Im\u00e1genes de Pantalla"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

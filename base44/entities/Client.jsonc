@@ -1,0 +1,39 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Nombre"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "photo_url": {
+      "type": "string",
+      "title": "Foto URL"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notas"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "gym_id"
+  ]
+}

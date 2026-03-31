@@ -1,0 +1,45 @@
+{
+  "name": "Attendance",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "title": "Cliente ID"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Nombre Cliente"
+    },
+    "membership_id": {
+      "type": "string",
+      "title": "Membres\u00eda ID"
+    },
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "date": {
+      "type": "string",
+      "title": "Fecha"
+    },
+    "scan_result": {
+      "type": "string",
+      "enum": [
+        "success",
+        "expiring",
+        "expired",
+        "invalid"
+      ],
+      "title": "Resultado"
+    },
+    "remaining_accesses": {
+      "type": "number",
+      "title": "Accesos Restantes al Momento"
+    }
+  },
+  "required": [
+    "client_id",
+    "gym_id",
+    "date"
+  ]
+}

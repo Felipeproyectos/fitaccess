@@ -1,0 +1,52 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "title": "Cliente ID"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Nombre Cliente"
+    },
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "plan_id": {
+      "type": "string",
+      "title": "Plan ID"
+    },
+    "plan_name": {
+      "type": "string",
+      "title": "Nombre Plan"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Monto"
+    },
+    "date": {
+      "type": "string",
+      "title": "Fecha"
+    },
+    "confirmed": {
+      "type": "boolean",
+      "title": "Confirmado",
+      "default": false
+    },
+    "confirmed_date": {
+      "type": "string",
+      "title": "Fecha Confirmaci\u00f3n"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notas"
+    }
+  },
+  "required": [
+    "client_id",
+    "gym_id",
+    "amount"
+  ]
+}

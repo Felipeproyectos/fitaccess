@@ -1,0 +1,36 @@
+{
+  "name": "QRCode",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "title": "Cliente ID"
+    },
+    "membership_id": {
+      "type": "string",
+      "title": "Membres\u00eda ID"
+    },
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "token": {
+      "type": "string",
+      "title": "Token \u00danico"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Activo",
+      "default": true
+    },
+    "qr_image_url": {
+      "type": "string",
+      "title": "Imagen QR URL"
+    }
+  },
+  "required": [
+    "client_id",
+    "membership_id",
+    "token"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Membership",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "title": "Cliente ID"
+    },
+    "gym_id": {
+      "type": "string",
+      "title": "Gimnasio ID"
+    },
+    "plan_id": {
+      "type": "string",
+      "title": "Plan ID"
+    },
+    "plan_name": {
+      "type": "string",
+      "title": "Nombre del Plan"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "unlimited",
+        "limited",
+        "weekly",
+        "monthly",
+        "custom"
+      ],
+      "title": "Tipo"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Fecha Inicio"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Fecha Fin"
+    },
+    "max_accesses": {
+      "type": "number",
+      "title": "Accesos M\u00e1ximos"
+    },
+    "remaining_accesses": {
+      "type": "number",
+      "title": "Accesos Restantes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expiring",
+        "expired",
+        "pending"
+      ],
+      "title": "Estado",
+      "default": "pending"
+    },
+    "price": {
+      "type": "number",
+      "title": "Precio"
+    }
+  },
+  "required": [
+    "client_id",
+    "gym_id"
+  ]
+}
