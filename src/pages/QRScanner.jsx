@@ -9,48 +9,29 @@ export default function QRScanner() {
   const [lastResult, setLastResult] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [recentScans, setRecentScans] = useState([]);
-  const inputRef = useRef(null);
+  const hiddenInputRef = useRef(null);
   const scanBuffer = useRef("");
   const scanTimer = useRef(null);
+  const processingRef = useRef(false);
+
+  // Keep processingRef in sync
+  useEffect(() => { processingRef.current = processing; }, [processing]);
 
   useEffect(() => {
     loadRecentScans();
 
-    // Listen globally so barcode scanner always works regardless of focus
-    function handleGlobalKeyDown(e) {
-      // Ignore if user is typing in a real input/textarea
+    // Focus the hidden input so scanner always sends keys there
+    hiddenInputRef.current?.focus();
+
+    function refocusHidden(e) {
+      // Only refocus if clicking outside a real interactive element
       const tag = e.target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-      if (e.key === 'Enter') {
-        const token = scanBuffer.current.trim();
-        if (token.length > 4) {
-          processToken(token);
-        }
-        scanBuffer.current = '';
-        setInput('');
-        clearTimeout(scanTimer.current);
-        e.preventDefault();
-        return;
-      }
-
-      if (e.key.length === 1) {
-        scanBuffer.current += e.key;
-        setInput(scanBuffer.current);
-        clearTimeout(scanTimer.current);
-        scanTimer.current = setTimeout(() => {
-          const token = scanBuffer.current.trim();
-          if (token.length > 8) {
-            processToken(token);
-            scanBuffer.current = '';
-            setInput('');
-          }
-        }, 300);
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' && tag !== 'BUTTON' && tag !== 'A') {
+        setTimeout(() => hiddenInputRef.current?.focus(), 50);
       }
     }
-
-    document.addEventListener('keydown', handleGlobalKeyDown);
-    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+    document.addEventListener('click', refocusHidden);
+    return () => document.removeEventListener('click', refocusHidden);
   }, []);
 
   async function loadRecentScans() {
@@ -58,15 +39,39 @@ export default function QRScanner() {
     setRecentScans(data);
   }
 
-  function handleChange(e) {
-    // fallback for manual typing in visible input
+  // Handler for the hidden input used by the barcode scanner
+  function handleHiddenInput(e) {
     const val = e.target.value;
     setInput(val);
     scanBuffer.current = val;
+
+    clearTimeout(scanTimer.current);
+    // Most barcode scanners end with Enter — we also auto-fire after 150ms of silence
+    scanTimer.current = setTimeout(() => {
+      const token = scanBuffer.current.trim();
+      if (token.length > 4) {
+        processToken(token);
+      }
+      scanBuffer.current = '';
+      setInput('');
+      if (hiddenInputRef.current) hiddenInputRef.current.value = '';
+    }, 150);
+  }
+
+  function handleHiddenKeyDown(e) {
+    if (e.key === 'Enter') {
+      clearTimeout(scanTimer.current);
+      const token = scanBuffer.current.trim();
+      if (token.length > 4) processToken(token);
+      scanBuffer.current = '';
+      setInput('');
+      if (hiddenInputRef.current) hiddenInputRef.current.value = '';
+      e.preventDefault();
+    }
   }
 
   async function processToken(token) {
-    if (processing) return;
+    if (processingRef.current) return;
     setProcessing(true);
     try {
       const result = await base44.functions.invoke("validateQR", { token });
