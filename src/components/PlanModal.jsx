@@ -71,25 +71,25 @@ export default function PlanModal({ plan, onClose, onSaved }) {
             </div>
           </div>
           {showDuration && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground mb-1.5 block">Duración (días) *</Label>
-              <Input value={form.duration_days} onChange={e => set("duration_days", e.target.value)} type="number" min="1"
-                className="bg-background border-border text-white" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground mb-1.5 block">Duración (días) *</Label>
+                <Input value={form.duration_days} onChange={e => set("duration_days", e.target.value)} type="number" min="1"
+                  className="bg-background border-border text-white" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
+                <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
+                  className="bg-background border-border text-white" />
+              </div>
             </div>
+          )}
+          {(isSinglePass || isFreePass) && (
             <div>
               <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
               <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
                 className="bg-background border-border text-white" />
             </div>
-          </div>
-          )}
-          {(isSinglePass || isFreePass) && (
-          <div>
-            <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
-            <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
-              className="bg-background border-border text-white" />
-          </div>
           )}
           {isSinglePass && (
             <div className="bg-orange-400/10 border border-orange-400/30 rounded-xl p-3">
@@ -101,12 +101,6 @@ export default function PlanModal({ plan, onClose, onSaved }) {
               <p className="text-xs text-blue-400 font-medium">🎟 Pase Libre: permite acceso libre en la fecha configurada al momento del pago.</p>
             </div>
           )}
-            <div>
-              <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
-              <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
-                className="bg-background border-border text-white" />
-            </div>
-          </div>
           {showAccesses && (
             <div>
               <Label className="text-muted-foreground mb-1.5 block">Número de Accesos</Label>
