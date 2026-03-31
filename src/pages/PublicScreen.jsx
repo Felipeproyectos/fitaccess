@@ -5,6 +5,30 @@ import { motion, AnimatePresence } from "framer-motion";
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const SCAN_DISPLAY_TIMEOUT = 7000; // 7 segundos
 
+function playSound(type) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const sounds = {
+    success: [{ freq: 523, dur: 0.12 }, { freq: 659, dur: 0.12 }, { freq: 784, dur: 0.2 }],
+    expiring: [{ freq: 440, dur: 0.15 }, { freq: 370, dur: 0.25 }],
+    expired:  [{ freq: 300, dur: 0.2 }, { freq: 220, dur: 0.3 }],
+    denied:   [{ freq: 300, dur: 0.2 }, { freq: 220, dur: 0.3 }],
+    invalid:  [{ freq: 280, dur: 0.25 }, { freq: 200, dur: 0.35 }],
+  };
+  const notes = sounds[type] || sounds.invalid;
+  let time = ctx.currentTime;
+  notes.forEach(({ freq, dur }) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = type === 'success' ? 'sine' : 'square';
+    gain.gain.setValueAtTime(0.15, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.start(time); osc.stop(time + dur);
+    time += dur + 0.04;
+  });
+} // 7 segundos
+
 export default function PublicScreen() {
   const [lastScan, setLastScan] = useState(null);
   const [showIdle, setShowIdle] = useState(false);
@@ -45,6 +69,9 @@ export default function PublicScreen() {
   }
 
   function showScanResult(attendanceData) {
+    const soundType = attendanceData.scan_result === 'success' && attendanceData.remaining_accesses === 0
+      ? 'denied' : attendanceData.scan_result;
+    playSound(soundType);
     setLastScan(attendanceData);
     setShowIdle(false);
     clearTimeout(idleTimer.current);
