@@ -42,6 +42,18 @@ export default function ConfirmPaymentModal({ payment, onClose, onConfirmed }) {
                 <span className="text-muted-foreground text-sm">Plan</span>
                 <span className="text-white font-medium">{payment.plan_name}</span>
               </div>
+              {payment.start_date && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground text-sm">Inicio Membresía</span>
+                <span className="text-white font-medium">{payment.start_date}</span>
+              </div>
+              )}
+              {payment.use_date && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground text-sm">🎟 Fecha de Uso</span>
+                <span className="text-blue-400 font-medium">{payment.use_date}</span>
+              </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-sm">Monto</span>
                 <span className="text-2xl font-bold text-white">${payment.amount?.toLocaleString()}</span>
@@ -80,8 +92,20 @@ export default function ConfirmPaymentModal({ payment, onClose, onConfirmed }) {
             </div>
             <p className="text-white font-bold text-lg">¡Pago Confirmado!</p>
             <p className="text-sm text-muted-foreground text-center">
-              Membresía activada y QR enviado por email a {payment.client_name}.
+              Membresía activada{result?.email_sent ? " y QR enviado por email a " : " para "}{payment.client_name}.
             </p>
+            {result?.start_date && (
+              <div className="text-sm bg-background border border-border rounded-lg p-3 w-full space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Inicio</span>
+                  <span className="text-white">{result.start_date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Vence</span>
+                  <span className="text-white">{result.end_date}</span>
+                </div>
+              </div>
+            )}
             {result?.qr_token && (
               <p className="text-xs text-muted-foreground font-mono bg-muted px-3 py-1 rounded">
                 Token: {result.qr_token.slice(0, 20)}...

@@ -10,7 +10,9 @@ const TYPES = [
   { value: "limited", label: "Por Clases" },
   { value: "weekly", label: "Semanal" },
   { value: "monthly", label: "Mensual" },
-  { value: "custom", label: "Personalizado" }
+  { value: "custom", label: "Personalizado" },
+  { value: "free_pass", label: "🎟 Pase Libre" },
+  { value: "single_pass", label: "⚡ Pase Único" }
 ];
 
 export default function PlanModal({ plan, onClose, onSaved }) {
@@ -40,6 +42,9 @@ export default function PlanModal({ plan, onClose, onSaved }) {
   }
 
   const showAccesses = form.type === "limited";
+  const isSinglePass = form.type === "single_pass";
+  const isFreePass = form.type === "free_pass";
+  const showDuration = !isSinglePass && !isFreePass;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -65,12 +70,37 @@ export default function PlanModal({ plan, onClose, onSaved }) {
               ))}
             </div>
           </div>
+          {showDuration && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-muted-foreground mb-1.5 block">Duración (días) *</Label>
               <Input value={form.duration_days} onChange={e => set("duration_days", e.target.value)} type="number" min="1"
                 className="bg-background border-border text-white" />
             </div>
+            <div>
+              <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
+              <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
+                className="bg-background border-border text-white" />
+            </div>
+          </div>
+          )}
+          {(isSinglePass || isFreePass) && (
+          <div>
+            <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
+            <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"
+              className="bg-background border-border text-white" />
+          </div>
+          )}
+          {isSinglePass && (
+            <div className="bg-orange-400/10 border border-orange-400/30 rounded-xl p-3">
+              <p className="text-xs text-orange-400 font-medium">⚡ Pase Único: el QR se desactiva automáticamente después del primer escaneo.</p>
+            </div>
+          )}
+          {isFreePass && (
+            <div className="bg-blue-400/10 border border-blue-400/30 rounded-xl p-3">
+              <p className="text-xs text-blue-400 font-medium">🎟 Pase Libre: permite acceso libre en la fecha configurada al momento del pago.</p>
+            </div>
+          )}
             <div>
               <Label className="text-muted-foreground mb-1.5 block">Precio *</Label>
               <Input value={form.price} onChange={e => set("price", e.target.value)} type="number" min="0" placeholder="0"

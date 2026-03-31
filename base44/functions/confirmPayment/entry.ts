@@ -3,9 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 function generateToken() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let token = '';
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  for (let i = 0; i < 32; i++) token += chars.charAt(Math.floor(Math.random() * chars.length));
   return token;
 }
 
@@ -18,40 +16,55 @@ Deno.serve(async (req) => {
     const { payment_id } = await req.json();
     if (!payment_id) return Response.json({ error: 'payment_id required' }, { status: 400 });
 
-    // Get payment
     const payments = await base44.asServiceRole.entities.Payment.filter({ id: payment_id });
     const payment = payments[0];
     if (!payment) return Response.json({ error: 'Payment not found' }, { status: 404 });
     if (payment.confirmed) return Response.json({ error: 'Payment already confirmed' }, { status: 400 });
 
-    // Get client
     const clients = await base44.asServiceRole.entities.Client.filter({ id: payment.client_id });
     const client = clients[0];
     if (!client) return Response.json({ error: 'Client not found' }, { status: 404 });
 
-    // Get plan
     const plans = await base44.asServiceRole.entities.MembershipPlan.filter({ id: payment.plan_id });
     const plan = plans[0];
     if (!plan) return Response.json({ error: 'Plan not found' }, { status: 404 });
 
-    // Invalidate previous QR codes
+    const isSinglePass = plan.type === 'single_pass';
+    const isFreePass = plan.type === 'free_pass';
+
+    // Invalidate previous active QR codes for this client
     const oldQRs = await base44.asServiceRole.entities.QRCode.filter({ client_id: client.id, active: true });
     for (const qr of oldQRs) {
       await base44.asServiceRole.entities.QRCode.update(qr.id, { active: false });
     }
 
-    // Calculate membership dates
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + (plan.duration_days || 30));
+    // Determine dates
+    let startStr, endStr, remainingAccesses, membershipStatus;
 
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
+    if (isSinglePass) {
+      // Single pass: valid only once, no date range needed
+      startStr = new Date().toISOString().split('T')[0];
+      endStr = startStr; // same day, expires after scan
+      remainingAccesses = 1;
+      membershipStatus = 'active';
+    } else if (isFreePass) {
+      // Free pass: valid only on use_date
+      startStr = payment.use_date || new Date().toISOString().split('T')[0];
+      endStr = startStr;
+      remainingAccesses = 1;
+      membershipStatus = 'active';
+    } else {
+      // Regular plan: start from payment.start_date (configured by admin) or today
+      const startDate = payment.start_date ? new Date(payment.start_date) : new Date();
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (plan.duration_days || 30));
+      startStr = startDate.toISOString().split('T')[0];
+      endStr = endDate.toISOString().split('T')[0];
 
-    // Determine status
-    const remainingAccesses = plan.max_accesses || null;
-    const isLimited = plan.type === 'limited' && plan.max_accesses;
-    const status = isLimited && plan.max_accesses <= 3 ? 'expiring' : 'active';
+      remainingAccesses = (plan.type === 'limited' && plan.max_accesses) ? plan.max_accesses : null;
+      const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+      membershipStatus = (remainingAccesses !== null && remainingAccesses <= 3) || daysLeft <= 3 ? 'expiring' : 'active';
+    }
 
     // Create membership
     const membership = await base44.asServiceRole.entities.Membership.create({
@@ -62,16 +75,14 @@ Deno.serve(async (req) => {
       type: plan.type,
       start_date: startStr,
       end_date: endStr,
-      max_accesses: plan.max_accesses || null,
+      max_accesses: remainingAccesses,
       remaining_accesses: remainingAccesses,
-      status,
+      status: membershipStatus,
       price: plan.price
     });
 
-    // Generate unique token
+    // Generate QR token and record
     const token = generateToken();
-
-    // Create QR code record
     const qrCode = await base44.asServiceRole.entities.QRCode.create({
       client_id: client.id,
       membership_id: membership.id,
@@ -88,26 +99,34 @@ Deno.serve(async (req) => {
 
     // Send email if client has email
     if (client.email) {
+      let planDetails = '';
+      if (isSinglePass) {
+        planDetails = `<p style="margin:8px 0 0 0;color:#FF7A00;font-size:13px;">⚡ Pase Único — se desactiva tras el primer escaneo</p>`;
+      } else if (isFreePass) {
+        planDetails = `<p style="margin:8px 0 0 0;color:#60a5fa;font-size:13px;">🎟 Pase Libre — válido el día: <strong>${startStr}</strong></p>`;
+      } else {
+        planDetails = `
+          <p style="margin:0 0 8px 0;color:#aaa;font-size:14px;">Vigencia</p>
+          <p style="margin:0 0 8px 0;color:#fff;">${startStr} → ${endStr}</p>
+          ${remainingAccesses ? `<p style="margin:4px 0 0 0;color:#FF7A00;">${remainingAccesses} accesos disponibles</p>` : ''}
+        `;
+      }
+
       const emailBody = `
         <div style="background:#0B0B0B;color:#fff;padding:40px;font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border-radius:12px;">
           <h1 style="color:#FF3B3B;font-size:32px;margin-bottom:8px;">¡Membresía Activada! 💪</h1>
           <p style="color:#aaa;margin-bottom:24px;">Hola <strong style="color:#fff">${client.name}</strong>, tu membresía ha sido confirmada.</p>
-          
           <div style="background:#1a1a1a;border-radius:8px;padding:20px;margin-bottom:24px;border:1px solid #333;">
             <p style="margin:0 0 8px 0;color:#aaa;font-size:14px;">Plan</p>
             <p style="margin:0 0 16px 0;color:#fff;font-size:18px;font-weight:bold;">${plan.name}</p>
-            <p style="margin:0 0 8px 0;color:#aaa;font-size:14px;">Vigencia</p>
-            <p style="margin:0;color:#fff;">${startStr} → ${endStr}</p>
-            ${plan.max_accesses ? `<p style="margin:8px 0 0 0;color:#FF7A00;">${plan.max_accesses} accesos disponibles</p>` : ''}
+            ${planDetails}
           </div>
-          
           <div style="background:#1a1a1a;border-radius:8px;padding:20px;margin-bottom:24px;border:1px solid #333;">
             <p style="margin:0 0 12px 0;color:#aaa;font-size:14px;">Tu código de acceso único:</p>
             <p style="background:#000;padding:12px;border-radius:6px;font-family:monospace;font-size:14px;color:#22FF88;word-break:break-all;margin:0;">${token}</p>
-            <p style="margin:8px 0 0 0;color:#666;font-size:12px;">Presenta este código o el QR en la recepción del gimnasio</p>
+            <p style="margin:8px 0 0 0;color:#666;font-size:12px;">Presenta este código en la entrada del gimnasio</p>
           </div>
-          
-          <p style="color:#666;font-size:12px;text-align:center;">FitAccess - Control inteligente de acceso para gimnasios</p>
+          <p style="color:#666;font-size:12px;text-align:center;">FitAccess — Control inteligente de acceso</p>
         </div>
       `;
 
@@ -123,7 +142,9 @@ Deno.serve(async (req) => {
       membership_id: membership.id,
       qr_token: token,
       qr_id: qrCode.id,
+      start_date: startStr,
       end_date: endStr,
+      plan_type: plan.type,
       email_sent: !!client.email
     });
 

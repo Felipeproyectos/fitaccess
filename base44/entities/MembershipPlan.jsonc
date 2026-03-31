@@ -17,7 +17,9 @@
         "limited",
         "weekly",
         "monthly",
-        "custom"
+        "custom",
+        "free_pass",
+        "single_pass"
       ],
       "title": "Tipo"
     },
@@ -47,7 +49,6 @@
     "name",
     "gym_id",
     "type",
-    "duration_days",
     "price"
   ]
 }

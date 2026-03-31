@@ -9,7 +9,13 @@ import { format } from "date-fns";
 export default function PaymentModal({ onClose, onSaved }) {
   const [clients, setClients] = useState([]);
   const [plans, setPlans] = useState([]);
-  const [form, setForm] = useState({ client_id: "", plan_id: "", amount: "", date: format(new Date(), "yyyy-MM-dd"), notes: "" });
+  const [form, setForm] = useState({
+    client_id: "", plan_id: "", amount: "",
+    date: format(new Date(), "yyyy-MM-dd"),
+    start_date: format(new Date(), "yyyy-MM-dd"),
+    use_date: format(new Date(), "yyyy-MM-dd"),
+    notes: ""
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,6 +31,10 @@ export default function PaymentModal({ onClose, onSaved }) {
   }, []);
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
+
+  const selectedPlan = plans.find(p => p.id === form.plan_id);
+  const isSinglePass = selectedPlan?.type === "single_pass";
+  const isFreePass = selectedPlan?.type === "free_pass";
 
   function handlePlanChange(planId) {
     const plan = plans.find(p => p.id === planId);
@@ -80,11 +90,32 @@ export default function PaymentModal({ onClose, onSaved }) {
                 className="bg-background border-border text-white" />
             </div>
             <div>
-              <Label className="text-muted-foreground mb-1.5 block">Fecha</Label>
+              <Label className="text-muted-foreground mb-1.5 block">Fecha Pago</Label>
               <Input value={form.date} onChange={e => set("date", e.target.value)} type="date"
                 className="bg-background border-border text-white" />
             </div>
           </div>
+          {!isSinglePass && !isFreePass && (
+            <div>
+              <Label className="text-muted-foreground mb-1.5 block">Fecha Inicio Membresía</Label>
+              <Input value={form.start_date} onChange={e => set("start_date", e.target.value)} type="date"
+                className="bg-background border-border text-white" />
+              <p className="text-xs text-muted-foreground mt-1">La duración del plan se contabiliza desde esta fecha</p>
+            </div>
+          )}
+          {isFreePass && (
+            <div>
+              <Label className="text-muted-foreground mb-1.5 block">🎟 Fecha de Uso del Pase</Label>
+              <Input value={form.use_date} onChange={e => set("use_date", e.target.value)} type="date"
+                className="bg-background border-border text-white" />
+              <p className="text-xs text-blue-400 mt-1">El pase sólo será válido en esta fecha</p>
+            </div>
+          )}
+          {isSinglePass && (
+            <div className="bg-orange-400/10 border border-orange-400/30 rounded-xl p-3">
+              <p className="text-xs text-orange-400 font-medium">⚡ El QR se desactivará automáticamente tras el primer escaneo.</p>
+            </div>
+          )}
           <div>
             <Label className="text-muted-foreground mb-1.5 block">Notas</Label>
             <Input value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Observaciones..."

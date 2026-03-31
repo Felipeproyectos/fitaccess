@@ -28,7 +28,15 @@
     },
     "date": {
       "type": "string",
-      "title": "Fecha"
+      "title": "Fecha Pago"
+    },
+    "start_date": {
+      "type": "string",
+      "title": "Fecha Inicio Membres\u00eda"
+    },
+    "use_date": {
+      "type": "string",
+      "title": "Fecha de Uso (Pase Libre)"
     },
     "confirmed": {
       "type": "boolean",
