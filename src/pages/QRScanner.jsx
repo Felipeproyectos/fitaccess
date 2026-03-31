@@ -15,11 +15,42 @@ export default function QRScanner() {
 
   useEffect(() => {
     loadRecentScans();
-    // Focus on input for physical QR reader
-    const focusInput = () => inputRef.current?.focus();
-    focusInput();
-    document.addEventListener("click", focusInput);
-    return () => document.removeEventListener("click", focusInput);
+
+    // Listen globally so barcode scanner always works regardless of focus
+    function handleGlobalKeyDown(e) {
+      // Ignore if user is typing in a real input/textarea
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if (e.key === 'Enter') {
+        const token = scanBuffer.current.trim();
+        if (token.length > 4) {
+          processToken(token);
+        }
+        scanBuffer.current = '';
+        setInput('');
+        clearTimeout(scanTimer.current);
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key.length === 1) {
+        scanBuffer.current += e.key;
+        setInput(scanBuffer.current);
+        clearTimeout(scanTimer.current);
+        scanTimer.current = setTimeout(() => {
+          const token = scanBuffer.current.trim();
+          if (token.length > 8) {
+            processToken(token);
+            scanBuffer.current = '';
+            setInput('');
+          }
+        }, 300);
+      }
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
   async function loadRecentScans() {
@@ -27,28 +58,11 @@ export default function QRScanner() {
     setRecentScans(data);
   }
 
-  // Handle QR scanner input (physical reader simulates keyboard)
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && scanBuffer.current.trim()) {
-      processToken(scanBuffer.current.trim());
-      scanBuffer.current = "";
-      setInput("");
-      clearTimeout(scanTimer.current);
-    }
-  }
-
   function handleChange(e) {
+    // fallback for manual typing in visible input
     const val = e.target.value;
     setInput(val);
     scanBuffer.current = val;
-    clearTimeout(scanTimer.current);
-    scanTimer.current = setTimeout(() => {
-      if (scanBuffer.current.trim().length > 8) {
-        processToken(scanBuffer.current.trim());
-        scanBuffer.current = "";
-        setInput("");
-      }
-    }, 300);
   }
 
   async function processToken(token) {
@@ -86,12 +100,7 @@ export default function QRScanner() {
         </Link>
       </div>
 
-      {/* Hidden input to capture QR reader */}
-      <input ref={inputRef} value={input} onChange={handleChange} onKeyDown={handleKeyDown}
-        className="opacity-0 absolute w-0 h-0" autoFocus />
-
-      <div className="bg-card border border-border rounded-xl p-8 text-center space-y-4 cursor-text"
-        onClick={() => inputRef.current?.focus()}>
+      <div className="bg-card border border-border rounded-xl p-8 text-center space-y-4">
         <div className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl ${processing ? "animate-pulse bg-primary/20" : "bg-white/5"}`}>
           {processing ? "⏳" : "📡"}
         </div>
