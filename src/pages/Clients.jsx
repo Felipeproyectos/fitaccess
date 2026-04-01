@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Search, Edit2, Eye, Phone, Mail } from "lucide-react";
+import BulkImportModal from "@/components/BulkImportModal";
+import BulkActivationModal from "@/components/BulkActivationModal";
 import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,8 @@ export default function Clients() {
   const [showModal, setShowModal] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [viewClient, setViewClient] = useState(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showBulkActivation, setShowBulkActivation] = useState(false);
 
   useEffect(() => { loadClients(); }, []);
 
@@ -51,9 +55,17 @@ export default function Clients() {
           <h1 className="text-3xl font-bold text-white">Clientes</h1>
           <p className="text-muted-foreground mt-1">{clients.length} clientes registrados</p>
         </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Cliente
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setShowBulkActivation(true)} className="gap-2">
+            🚀 Activación Masiva
+          </Button>
+          <Button variant="outline" onClick={() => setShowBulkImport(true)} className="gap-2">
+            📥 Carga Masiva
+          </Button>
+          <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
+            <Plus className="w-4 h-4" /> Nuevo Cliente
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -143,6 +155,16 @@ export default function Clients() {
           onClose={() => setViewClient(null)}
           onEdit={() => { openEdit(viewClient); setViewClient(null); }}
         />
+      )}
+      {showBulkImport && (
+        <BulkImportModal
+          gymId="default"
+          onClose={() => setShowBulkImport(false)}
+          onImported={() => { setShowBulkImport(false); loadClients(); }}
+        />
+      )}
+      {showBulkActivation && (
+        <BulkActivationModal onClose={() => setShowBulkActivation(false)} />
       )}
     </div>
   );
