@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Monitor } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 export default function QRScanner() {
   const [input, setInput] = useState("");
+  const [manualToken, setManualToken] = useState("");
   const [lastResult, setLastResult] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [recentScans, setRecentScans] = useState([]);
@@ -117,6 +120,27 @@ export default function QRScanner() {
           Apunta el lector QR hacia el código del cliente. El acceso se valida automáticamente.
         </p>
         {input && <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-3 py-1 rounded inline-block">{input}</p>}
+      </div>
+
+      {/* Manual token input */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <p className="text-sm font-semibold text-white mb-3">Ingresar token manualmente</p>
+        <div className="flex gap-2">
+          <Input
+            value={manualToken}
+            onChange={e => setManualToken(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && manualToken.trim()) { processToken(manualToken.trim()); setManualToken(""); } }}
+            placeholder="Pegar o escribir token QR..."
+            className="bg-background border-border text-white font-mono text-sm"
+          />
+          <Button
+            onClick={() => { if (manualToken.trim()) { processToken(manualToken.trim()); setManualToken(""); } }}
+            disabled={processing || !manualToken.trim()}
+            className="shrink-0"
+          >
+            Validar
+          </Button>
+        </div>
       </div>
 
       <AnimatePresence>
