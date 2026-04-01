@@ -90,6 +90,7 @@ export default function QRScanner() {
     expired: { bg: "bg-red-500/20", border: "border-red-500/40", text: "text-red-400", icon: "❌", label: "Membresía Vencida" },
     invalid: { bg: "bg-red-500/20", border: "border-red-500/40", text: "text-red-400", icon: "🚫", label: "Código Inválido" },
     error: { bg: "bg-red-500/20", border: "border-red-500/40", text: "text-red-400", icon: "⚠️", label: "Error" },
+    already_registered: { bg: "bg-yellow-500/20", border: "border-yellow-500/40", text: "text-yellow-400", icon: "🕐", label: "Ya Registrado Hoy" },
   };
 
   return (

@@ -25,6 +25,15 @@ export default function ClientModal({ client, onClose, onSaved }) {
   async function save() {
     if (!form.name.trim()) return;
     setSaving(true);
+    // Validate duplicate email
+    if (form.email?.trim()) {
+      const existing = await base44.entities.Client.filter({ email: form.email.trim() });
+      if (existing.some(c => c.id !== client?.id)) {
+        alert('Ya existe un cliente con ese email.');
+        setSaving(false);
+        return;
+      }
+    }
     const data = { ...form, name: toTitleCase(form.name.trim()) };
     if (client?.id) await base44.entities.Client.update(client.id, data);
     else await base44.entities.Client.create(data);

@@ -35,6 +35,12 @@ Deno.serve(async (req) => {
     const isSinglePass = membership.type === 'single_pass';
     const isFreePass = membership.type === 'free_pass';
 
+    // Check if already attended today
+    const todayAttendances = await base44.asServiceRole.entities.Attendance.filter({ client_id: client.id, date: today });
+    if (todayAttendances.length > 0) {
+      return Response.json({ status: 'already_registered', client_name: client.name, message: 'Ya registraste tu asistencia hoy. ¡Nos vemos mañana!' });
+    }
+
     // Free pass: only valid on its specific date
     if (isFreePass) {
       if (today !== membership.start_date) {

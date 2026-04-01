@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PaymentModal from "@/components/PaymentModal";
 import ConfirmPaymentModal from "@/components/ConfirmPaymentModal";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 
 export default function Payments() {
   const [payments, setPayments] = useState([]);
@@ -14,6 +14,8 @@ export default function Payments() {
   const [showCreate, setShowCreate] = useState(false);
   const [confirmPayment, setConfirmPayment] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => { loadPayments(); }, []);
 
@@ -24,10 +26,18 @@ export default function Payments() {
     setLoading(false);
   }
 
+  const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const confirmedAll = payments.filter(p => p.confirmed);
+  const monthPayments = confirmedAll.filter(p => p.date >= monthStart);
+  const monthIncome = monthPayments.reduce((s, p) => s + (p.amount || 0), 0);
+  const monthCount = monthPayments.length;
+
   const filtered = payments.filter(p => {
     const matchSearch = p.client_name?.toLowerCase().includes(search.toLowerCase()) || p.plan_name?.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || (filter === "pending" && !p.confirmed) || (filter === "confirmed" && p.confirmed);
-    return matchSearch && matchFilter;
+    const matchFrom = !dateFrom || (p.date && p.date >= dateFrom);
+    const matchTo = !dateTo || (p.date && p.date <= dateTo);
+    return matchSearch && matchFilter && matchFrom && matchTo;
   });
 
   return (
@@ -42,11 +52,34 @@ export default function Payments() {
         </Button>
       </div>
 
+      <div className="grid grid-cols-2 gap-4 mb-2">
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Recaudado este mes</p>
+          <p className="text-2xl font-bold text-green-400">${monthIncome.toLocaleString('es-CL')}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{monthCount} pagos confirmados</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total histórico</p>
+          <p className="text-2xl font-bold text-white">${confirmedAll.reduce((s,p)=>s+(p.amount||0),0).toLocaleString('es-CL')}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{confirmedAll.length} pagos en total</p>
+        </div>
+      </div>
+
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
             className="pl-10 bg-card border-border text-white placeholder:text-muted-foreground" />
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+            className="bg-card border-border text-white w-40 text-sm" placeholder="Desde" />
+          <span className="text-muted-foreground text-sm">—</span>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+            className="bg-card border-border text-white w-40 text-sm" placeholder="Hasta" />
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="text-xs text-muted-foreground hover:text-white">Limpiar</button>
+          )}
         </div>
         <div className="flex gap-2">
           {["all", "pending", "confirmed"].map(f => (

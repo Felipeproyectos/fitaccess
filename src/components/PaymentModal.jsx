@@ -14,6 +14,7 @@ export default function PaymentModal({ onClose, onSaved }) {
     date: format(new Date(), "yyyy-MM-dd"),
     start_date: format(new Date(), "yyyy-MM-dd"),
     use_date: format(new Date(), "yyyy-MM-dd"),
+    payment_method: "Efectivo",
     notes: ""
   });
   const [saving, setSaving] = useState(false);
@@ -116,6 +117,15 @@ export default function PaymentModal({ onClose, onSaved }) {
               <p className="text-xs text-orange-400 font-medium">⚡ El QR se desactivará automáticamente tras el primer escaneo.</p>
             </div>
           )}
+          <div>
+            <Label className="text-muted-foreground mb-1.5 block">Método de Pago</Label>
+            <select value={form.payment_method} onChange={e => set("payment_method", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white text-sm">
+              {["Efectivo","Transferencia","Tarjeta de Débito","Tarjeta de Crédito"].map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <Label className="text-muted-foreground mb-1.5 block">Notas</Label>
             <Input value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Observaciones..."

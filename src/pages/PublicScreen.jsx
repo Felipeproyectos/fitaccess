@@ -13,6 +13,7 @@ function playSound(type) {
     expired:  [{ freq: 300, dur: 0.2 }, { freq: 220, dur: 0.3 }],
     denied:   [{ freq: 300, dur: 0.2 }, { freq: 220, dur: 0.3 }],
     invalid:  [{ freq: 280, dur: 0.25 }, { freq: 200, dur: 0.35 }],
+    already_registered: [{ freq: 520, dur: 0.1 }, { freq: 520, dur: 0.1 }, { freq: 520, dur: 0.15 }],
   };
   const notes = sounds[type] || sounds.invalid;
   let time = ctx.currentTime;
@@ -161,6 +162,15 @@ export default function PublicScreen() {
       icon: "⛔",
       label: "ACCESO DENEGADO",
       border: "border-[#FF3B3B]/30"
+    },
+    already_registered: {
+      bg: "from-[#0B0B0B] via-[#1a1200] to-[#0B0B0B]",
+      accent: "#FFD700",
+      glow: "0 0 80px rgba(255,215,0,0.3)",
+      icon: "🕐",
+      label: "YA REGISTRADO HOY",
+      border: "border-[#FFD700]/30",
+      subtitle: "Ya registraste tu asistencia hoy. ¡Nos vemos mañana!"
     }
   };
 
@@ -184,11 +194,17 @@ export default function PublicScreen() {
               </AnimatePresence>
             ) : (
               <div className="text-center space-y-6">
-                <div className="relative">
-                  <h1 className="font-display text-[12vw] text-gradient leading-none">
-                    {gym?.name || "FITACCESS"}
-                  </h1>
-                  <div className="absolute inset-0 blur-3xl opacity-20 bg-gradient-to-r from-[#FF3B3B] to-[#FF7A00]" />
+                <div className="relative flex items-center justify-center">
+                  {gym?.logo_url ? (
+                    <img src={gym.logo_url} alt={gym.name} className="max-h-[15vw] max-w-[60vw] object-contain" />
+                  ) : (
+                    <>
+                      <h1 className="font-display text-[12vw] text-gradient leading-none">
+                        {gym?.name || "FITACCESS"}
+                      </h1>
+                      <div className="absolute inset-0 blur-3xl opacity-20 bg-gradient-to-r from-[#FF3B3B] to-[#FF7A00]" />
+                    </>
+                  )}
                 </div>
                 <p className="text-2xl text-white/40 font-light">Control inteligente de acceso</p>
                 <div className="mt-8 text-6xl font-bold text-white/80 tabular-nums">
@@ -219,7 +235,10 @@ export default function PublicScreen() {
               <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
                 className={`border ${cfg.border} rounded-3xl px-16 py-8 backdrop-blur-sm bg-white/5`}>
                 <p className="text-[6vw] font-bold text-white leading-none">{lastScan.client_name}</p>
-                {lastScan.remaining_accesses !== null && lastScan.remaining_accesses !== undefined && (
+                {cfg.subtitle && (
+                  <p className="text-xl mt-3" style={{ color: cfg.accent }}>{cfg.subtitle}</p>
+                )}
+                {!cfg.subtitle && lastScan.remaining_accesses !== null && lastScan.remaining_accesses !== undefined && (
                   <p className="text-2xl mt-4" style={{ color: cfg.accent }}>
                     {lastScan.remaining_accesses} accesos restantes
                   </p>

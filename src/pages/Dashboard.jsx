@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Users, Activity, AlertTriangle, TrendingUp, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { Users, Activity, AlertTriangle, TrendingUp, Clock, Plus, CreditCard, DollarSign } from "lucide-react";
+import { format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ todayAttendance: 0, activeClients: 0, expiringClients: 0, pendingPayments: 0 });
+  const [financial, setFinancial] = useState({ monthIncome: 0, totalCollected: 0, pendingAmount: 0 });
   const [recentAttendance, setRecentAttendance] = useState([]);
   const [expiringClients, setExpiringClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,21 +20,31 @@ export default function Dashboard() {
   async function loadData() {
     setLoading(true);
     const today = format(new Date(), "yyyy-MM-dd");
-    const [attendances, memberships, payments] = await Promise.all([
-      base44.entities.Attendance.filter({ date: today }, "-created_date", 10),
-      base44.entities.Membership.filter({ status: "active" }),
-      base44.entities.Payment.filter({ confirmed: false })
+    const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
+    const [attendances, memberships, allPayments] = await Promise.all([
+      base44.entities.Attendance.filter({ date: today }, "-created_date", 5),
+      base44.entities.Membership.list("-created_date", 200),
+      base44.entities.Payment.list("-created_date", 500)
     ]);
 
-    const expiring = memberships.filter(m => m.status === "expiring" || (m.remaining_accesses !== undefined && m.remaining_accesses <= 3));
-    
+    const activeMemberships = memberships.filter(m => m.status === "active" || m.status === "expiring");
+    const expiring = memberships.filter(m => m.status === "expiring" || (m.remaining_accesses !== undefined && m.remaining_accesses <= 3 && m.remaining_accesses >= 0));
+    const pendingPayments = allPayments.filter(p => !p.confirmed);
+    const confirmedPayments = allPayments.filter(p => p.confirmed);
+    const monthPayments = confirmedPayments.filter(p => p.date >= monthStart);
+
     setStats({
       todayAttendance: attendances.length,
-      activeClients: memberships.length,
+      activeClients: activeMemberships.length,
       expiringClients: expiring.length,
-      pendingPayments: payments.length
+      pendingPayments: pendingPayments.length
     });
-    setRecentAttendance(attendances.slice(0, 8));
+    setFinancial({
+      monthIncome: monthPayments.reduce((s, p) => s + (p.amount || 0), 0),
+      totalCollected: confirmedPayments.reduce((s, p) => s + (p.amount || 0), 0),
+      pendingAmount: pendingPayments.reduce((s, p) => s + (p.amount || 0), 0)
+    });
+    setRecentAttendance(attendances.slice(0, 5));
     setExpiringClients(expiring.slice(0, 5));
     setLoading(false);
   }
@@ -45,10 +58,38 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-muted-foreground mt-1 capitalize">{format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 capitalize">{format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => navigate('/payments')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/20 border border-primary/30 text-primary text-sm hover:bg-primary/30 transition-colors">
+            <CreditCard className="w-4 h-4" /> Registrar Pago
+          </button>
+          <button onClick={() => navigate('/clients')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border border-border text-white text-sm hover:border-primary/40 transition-colors">
+            <Plus className="w-4 h-4" /> Nuevo Cliente
+          </button>
+        </div>
       </div>
+
+      {/* Financial summary */}
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ingresos del Mes</p>
+            <p className="text-2xl font-bold text-green-400">${financial.monthIncome.toLocaleString('es-CL')}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Recaudado</p>
+            <p className="text-2xl font-bold text-white">${financial.totalCollected.toLocaleString('es-CL')}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Pendiente de Cobro</p>
+            <p className="text-2xl font-bold text-orange-400">${financial.pendingAmount.toLocaleString('es-CL')}</p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

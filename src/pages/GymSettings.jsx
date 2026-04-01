@@ -26,10 +26,14 @@ export default function GymSettings() {
     setSaving(false);
   }
 
-  function addImage() {
-    if (!newImageUrl.trim()) return;
-    setGym(g => ({ ...g, slideshow_images: [...(g.slideshow_images || []), newImageUrl.trim()] }));
-    setNewImageUrl("");
+  async function handleSlideUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setGym(g => ({ ...g, slideshow_images: [...(g.slideshow_images || []), file_url] }));
+    setUploading(false);
+    e.target.value = '';
   }
 
   function removeImage(i) {
@@ -93,11 +97,11 @@ export default function GymSettings() {
       <div className="bg-card border border-border rounded-xl p-6 space-y-5">
         <h2 className="text-lg font-semibold text-white">Imágenes de Pantalla Pública</h2>
         <p className="text-sm text-muted-foreground">Se muestran en la pantalla pública cuando no hay actividad por más de 5 minutos.</p>
-        <div className="flex gap-2">
-          <Input value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)}
-            placeholder="URL de imagen..." className="bg-background border-border text-white" />
-          <Button onClick={addImage} variant="secondary" className="gap-1"><Plus className="w-4 h-4" /> Añadir</Button>
-        </div>
+        <label className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 rounded-lg bg-secondary text-sm text-white hover:bg-secondary/70 transition-colors">
+          <Upload className="w-4 h-4" />
+          {uploading ? "Subiendo..." : "Subir Imagen"}
+          <input type="file" accept="image/*" className="hidden" onChange={handleSlideUpload} disabled={uploading} />
+        </label>
         <div className="space-y-2">
           {(gym.slideshow_images || []).map((img, i) => (
             <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-background">

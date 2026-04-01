@@ -8,6 +8,7 @@ import ClientDetailModal from "@/components/ClientDetailModal";
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
+  const [memberships, setMemberships] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -18,9 +19,19 @@ export default function Clients() {
 
   async function loadClients() {
     setLoading(true);
-    const data = await base44.entities.Client.list("-created_date", 100);
+    const [data, mems] = await Promise.all([
+      base44.entities.Client.list("-created_date", 100),
+      base44.entities.Membership.list("-created_date", 500)
+    ]);
     setClients(data);
+    setMemberships(mems);
     setLoading(false);
+  }
+
+  function getClientMembership(clientId) {
+    const active = memberships.find(m => m.client_id === clientId && (m.status === 'active' || m.status === 'expiring'));
+    if (active) return active;
+    return memberships.find(m => m.client_id === clientId);
   }
 
   const filtered = clients.filter(c =>
@@ -88,10 +99,25 @@ export default function Clients() {
                   <p className="text-xs text-muted-foreground">{client.phone}</p>
                 </div>
               )}
-              <div className="mt-3">
-                <span className={`text-xs px-2 py-0.5 rounded-full ${client.active !== false ? "bg-green-400/20 text-green-400" : "bg-red-400/20 text-red-400"}`}>
-                  {client.active !== false ? "Activo" : "Inactivo"}
-                </span>
+              <div className="mt-3 space-y-1.5">
+                {(() => {
+                  const mem = getClientMembership(client.id);
+                  const isExpired = mem && (mem.status === 'expired' || (mem.remaining_accesses !== undefined && mem.remaining_accesses <= 0));
+                  return (
+                    <>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : client.active !== false ? 'bg-green-400/20 text-green-400' : 'bg-red-400/20 text-red-400'}`}>
+                        {isExpired ? 'Vencido' : client.active !== false ? 'Activo' : 'Inactivo'}
+                      </span>
+                      {mem ? (
+                        <p className="text-xs text-muted-foreground">
+                          {mem.plan_name}{mem.end_date ? ` · vence ${mem.end_date}` : ''}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Sin membresía</p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}
