@@ -18,11 +18,16 @@ export default function ClientModal({ client, onClose, onSaved }) {
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
 
+  function toTitleCase(str) {
+    return str.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  }
+
   async function save() {
     if (!form.name.trim()) return;
     setSaving(true);
-    if (client?.id) await base44.entities.Client.update(client.id, form);
-    else await base44.entities.Client.create(form);
+    const data = { ...form, name: toTitleCase(form.name.trim()) };
+    if (client?.id) await base44.entities.Client.update(client.id, data);
+    else await base44.entities.Client.create(data);
     setSaving(false);
     onSaved();
   }

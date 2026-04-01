@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Users, Activity, AlertTriangle, TrendingUp, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ todayAttendance: 0, activeClients: 0, expiringClients: 0, pendingPayments: 0 });
@@ -46,7 +47,7 @@ export default function Dashboard() {
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">{format(new Date(), "EEEE, d 'de' MMMM yyyy")}</p>
+        <p className="text-muted-foreground mt-1 capitalize">{format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</p>
       </div>
 
       {loading ? (

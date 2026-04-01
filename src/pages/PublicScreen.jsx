@@ -37,7 +37,6 @@ export default function PublicScreen() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const idleTimer = useRef(null);
-  const hiddenInputRef = useRef(null);
   const scanBuffer = useRef("");
   const scanTimer = useRef(null);
   const processingRef = useRef(false);
@@ -47,25 +46,33 @@ export default function PublicScreen() {
     startIdleTimer();
     const clock = setInterval(() => setCurrentTime(new Date()), 1000);
 
-    // Subscribe to new attendance (triggered by scans from other devices)
+    // Subscribe to Attendance for cross-tab sync (scanner on another tab/page)
     const unsub = base44.entities.Attendance.subscribe((event) => {
       if (event.type === "create") {
         showScanResult(event.data);
       }
     });
 
-    // Focus hidden input for local QR scanner
-    hiddenInputRef.current?.focus();
-
-    function refocusHidden(e) {
-      const tag = e.target?.tagName;
-      if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' && tag !== 'BUTTON' && tag !== 'A') {
-        setTimeout(() => hiddenInputRef.current?.focus(), 50);
+    // Document-level keydown: captures USB barcode/QR scanner without needing focus
+    function handleKeyDown(e) {
+      if (e.key === 'Enter') {
+        clearTimeout(scanTimer.current);
+        const token = scanBuffer.current.trim();
+        if (token.length > 4) processLocalScan(token);
+        scanBuffer.current = '';
+      } else if (e.key.length === 1) {
+        scanBuffer.current += e.key;
+        clearTimeout(scanTimer.current);
+        scanTimer.current = setTimeout(() => {
+          const token = scanBuffer.current.trim();
+          if (token.length > 4) processLocalScan(token);
+          scanBuffer.current = '';
+        }, 200);
       }
     }
-    document.addEventListener('click', refocusHidden);
+    document.addEventListener('keydown', handleKeyDown);
 
-    return () => { clearInterval(clock); unsub(); clearTimeout(idleTimer.current); document.removeEventListener('click', refocusHidden); };
+    return () => { clearInterval(clock); unsub(); clearTimeout(idleTimer.current); clearTimeout(scanTimer.current); document.removeEventListener('keydown', handleKeyDown); };
   }, []);
 
   // Slideshow rotation
@@ -75,38 +82,15 @@ export default function PublicScreen() {
     return () => clearInterval(t);
   }, [showIdle, slideshowImages]);
 
-  // Handle local QR scanner input
-  function handleHiddenInput(e) {
-    const val = e.target.value;
-    scanBuffer.current = val;
-    clearTimeout(scanTimer.current);
-    scanTimer.current = setTimeout(() => {
-      const token = scanBuffer.current.trim();
-      if (token.length > 4) processLocalScan(token);
-      scanBuffer.current = '';
-      if (hiddenInputRef.current) hiddenInputRef.current.value = '';
-    }, 150);
-  }
-
-  function handleHiddenKeyDown(e) {
-    if (e.key === 'Enter') {
-      clearTimeout(scanTimer.current);
-      const token = scanBuffer.current.trim();
-      if (token.length > 4) processLocalScan(token);
-      scanBuffer.current = '';
-      if (hiddenInputRef.current) hiddenInputRef.current.value = '';
-      e.preventDefault();
-    }
-  }
 
   async function processLocalScan(token) {
     if (processingRef.current) return;
     processingRef.current = true;
     try {
-      await base44.functions.invoke("validateQR", { token });
-      // Result will arrive via the Attendance subscription
+      const res = await base44.functions.invoke("validateQR", { token });
+      if (res.data) showScanResult({ ...res.data, scan_result: res.data.status, client_name: res.data.client_name });
     } catch (err) {
-      console.error("QR scan error:", err);
+      showScanResult({ scan_result: 'invalid', client_name: 'Error de lectura', remaining_accesses: null });
     }
     processingRef.current = false;
   }
@@ -187,15 +171,7 @@ export default function PublicScreen() {
 
   return (
     <div className="fixed inset-0 bg-[#0B0B0B] overflow-hidden select-none">
-      {/* Hidden input captures QR scanner keystrokes when scanner is connected to this device */}
-      <input
-        ref={hiddenInputRef}
-        className="fixed opacity-0 pointer-events-none w-0 h-0"
-        onChange={handleHiddenInput}
-        onKeyDown={handleHiddenKeyDown}
-        autoComplete="off"
-        tabIndex={-1}
-      />
+
       <AnimatePresence mode="wait">
         {showIdle || !lastScan ? (
           <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

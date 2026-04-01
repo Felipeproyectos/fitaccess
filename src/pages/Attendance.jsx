@@ -15,8 +15,8 @@ export default function Attendance() {
   async function loadAttendances() {
     setLoading(true);
     const data = dateFilter
-      ? await base44.entities.Attendance.filter({ date: dateFilter }, "-created_date", 100)
-      : await base44.entities.Attendance.list("-created_date", 100);
+      ? await base44.entities.Attendance.filter({ date: dateFilter }, "-created_date", 200)
+      : await base44.entities.Attendance.list("-created_date", 200);
     setAttendances(data);
     setLoading(false);
   }
@@ -74,7 +74,9 @@ export default function Attendance() {
               {filtered.map((a, i) => (
                 <tr key={a.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
                   <td className="px-5 py-3 text-sm font-medium text-white">{a.client_name}</td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">{a.date}</td>
+                  <td className="px-5 py-3 text-sm text-muted-foreground">
+                   {a.created_date ? new Date(a.created_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : a.date}
+                  </td>
                   <td className="px-5 py-3 text-sm text-muted-foreground">
                     {a.remaining_accesses !== null && a.remaining_accesses !== undefined ? a.remaining_accesses : "—"}
                   </td>

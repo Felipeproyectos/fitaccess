@@ -24,7 +24,8 @@ export default function Memberships() {
     loadPlans();
   }
 
-  const typeLabels = { unlimited: "Ilimitado", limited: "Por Clases", weekly: "Semanal", monthly: "Mensual", custom: "Personalizado" };
+  const typeLabels = { unlimited: "Ilimitado", limited: "Por Clases", weekly: "Semanal", monthly: "Mensual", custom: "Personalizado", single_pass: "Pase Único", free_pass: "Pase Libre" };
+  const typeColors2 = { single_pass: "text-cyan-400 bg-cyan-400/10", free_pass: "text-teal-400 bg-teal-400/10" };
   const typeColors = { unlimited: "text-blue-400 bg-blue-400/10", limited: "text-purple-400 bg-purple-400/10", weekly: "text-yellow-400 bg-yellow-400/10", monthly: "text-green-400 bg-green-400/10", custom: "text-pink-400 bg-pink-400/10" };
 
   return (
@@ -62,7 +63,7 @@ export default function Memberships() {
               </div>
               <h3 className="font-semibold text-white text-lg">{plan.name}</h3>
               <div className="flex items-center gap-2 mt-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[plan.type] || "text-muted-foreground bg-muted"}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[plan.type] || typeColors2[plan.type] || "text-muted-foreground bg-muted"}`}>
                   {typeLabels[plan.type] || plan.type}
                 </span>
               </div>
