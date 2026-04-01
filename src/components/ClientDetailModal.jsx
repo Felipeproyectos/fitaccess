@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle } from "lucide-react";
+import { toTitleCase } from "@/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,7 +105,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
             {client.name?.charAt(0)?.toUpperCase()}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">{client.name}</h3>
+            <h3 className="text-xl font-bold text-white">{toTitleCase(client.name)}</h3>
             {client.email && (
               <div className="flex items-center gap-1.5 mt-1">
                 <Mail className="w-3.5 h-3.5 text-muted-foreground" />

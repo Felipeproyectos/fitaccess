@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toTitleCase } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Search, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,7 @@ export default function Attendance() {
             <tbody>
               {filtered.map((a, i) => (
                 <tr key={a.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-white/[0.02]"}`}>
-                  <td className="px-5 py-3 text-sm font-medium text-white">{a.client_name}</td>
+                  <td className="px-5 py-3 text-sm font-medium text-white">{toTitleCase(a.client_name)}</td>
                   <td className="px-5 py-3 text-sm text-muted-foreground">
                    {a.created_date ? new Date(a.created_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : a.date}
                   </td>

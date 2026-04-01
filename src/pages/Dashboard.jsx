@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Users, Activity, AlertTriangle, TrendingUp, Clock, Plus, CreditCard, DollarSign } from "lucide-react";
+import { toTitleCase } from "@/utils";
 import { format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -123,7 +124,7 @@ export default function Dashboard() {
               {recentAttendance.map((a) => (
                 <div key={a.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-white">{a.client_name}</p>
+                    <p className="text-sm font-medium text-white">{toTitleCase(a.client_name)}</p>
                     <p className="text-xs text-muted-foreground">{a.date}</p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${

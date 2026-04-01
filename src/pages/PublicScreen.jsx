@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
+import { toTitleCase } from "@/utils";
 
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const SCAN_DISPLAY_TIMEOUT = 7000; // 7 segundos
@@ -234,7 +235,7 @@ export default function PublicScreen() {
               </motion.div>
               <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
                 className={`border ${cfg.border} rounded-3xl px-16 py-8 backdrop-blur-sm bg-white/5`}>
-                <p className="text-[6vw] font-bold text-white leading-none">{lastScan.client_name}</p>
+                <p className="text-[6vw] font-bold text-white leading-none">{toTitleCase(lastScan.client_name)}</p>
                 {cfg.subtitle && (
                   <p className="text-xl mt-3" style={{ color: cfg.accent }}>{cfg.subtitle}</p>
                 )}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle, Clock, Plus, Search } from "lucide-react";
+import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PaymentModal from "@/components/PaymentModal";
@@ -106,7 +107,7 @@ export default function Payments() {
                     : <Clock className="w-5 h-5 text-orange-400" />}
                 </div>
                 <div>
-                  <p className="font-semibold text-white">{payment.client_name}</p>
+                  <p className="font-semibold text-white">{toTitleCase(payment.client_name)}</p>
                   <p className="text-sm text-muted-foreground">{payment.plan_name} · {payment.date ? format(new Date(payment.date), "dd/MM/yyyy") : ""}</p>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Search, Edit2, Eye, Phone, Mail } from "lucide-react";
+import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ClientModal from "@/components/ClientModal";
@@ -86,7 +87,7 @@ export default function Clients() {
                   </Button>
                 </div>
               </div>
-              <h3 className="font-semibold text-white">{client.name}</h3>
+              <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
               {client.email && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Mail className="w-3 h-3 text-muted-foreground" />
