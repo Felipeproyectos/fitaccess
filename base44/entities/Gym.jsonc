@@ -28,6 +28,17 @@
         "type": "string"
       },
       "title": "Im\u00e1genes de Pantalla"
+    },
+    "public_screen_design": {
+      "type": "string",
+      "title": "Dise\u00f1o Pantalla P\u00fablica",
+      "enum": [
+        "minimal_glow",
+        "neon_panels",
+        "dark_elegance",
+        "dynamic_geometry"
+      ],
+      "default": "minimal_glow"
     }
   },
   "required": [

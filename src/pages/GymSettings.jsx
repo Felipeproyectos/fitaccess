@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Save, Upload, Plus, Trash2 } from "lucide-react";
+import { Save, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 export default function GymSettings() {
   const [gym, setGym] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => { loadGym(); }, []);
@@ -92,6 +91,30 @@ export default function GymSettings() {
           {uploading ? "Subiendo..." : "Subir Logo"}
           <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
         </label>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+        <h2 className="text-lg font-semibold text-white">Diseño Pantalla Pública</h2>
+        <p className="text-sm text-muted-foreground">Elige el estilo visual que se mostrará en la pantalla de acceso del gimnasio.</p>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { key: "minimal_glow",     label: "Resplandor Minimalista", desc: "Fondo oscuro con halo brillante central, logo prominente y reloj.", icon: "🌟" },
+            { key: "neon_panels",      label: "Paneles y Neón",         desc: "Cabecera estructurada, panel central con bordes de neón luminoso.", icon: "💡" },
+            { key: "dark_elegance",    label: "Elegancia Oscura",       desc: "Diseño minimalista puro, tipografía fina, sin elementos extra.", icon: "🖤" },
+            { key: "dynamic_geometry", label: "Geometría Dinámica",     desc: "Líneas diagonales en el fondo, esquinas marcadas, energía angular.", icon: "⬡" },
+          ].map(d => (
+            <button key={d.key} onClick={() => setGym(g => ({ ...g, public_screen_design: d.key }))}
+              className={`text-left p-4 rounded-xl border-2 transition-all ${
+                (gym.public_screen_design || "minimal_glow") === d.key
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-background hover:border-white/20"
+              }`}>
+              <div className="text-2xl mb-2">{d.icon}</div>
+              <p className="text-sm font-semibold text-white">{d.label}</p>
+              <p className="text-xs text-muted-foreground mt-1">{d.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-xl p-6 space-y-5">
