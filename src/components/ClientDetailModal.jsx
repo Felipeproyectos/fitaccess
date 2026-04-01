@@ -246,7 +246,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                     <p className="text-xs text-muted-foreground">{m.start_date} → {m.end_date}</p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[m.status] || "bg-muted text-muted-foreground"}`}>
-                    {m.status}
+                    {{ active: "Activa", expiring: "Por Vencer", expired: "Expirada", pending: "Pendiente" }[m.status] || m.status}
                   </span>
                 </div>
               ))}
