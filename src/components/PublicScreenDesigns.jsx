@@ -26,18 +26,15 @@ export function MinimalGlowIdle({ gym, currentTime }) {
           style={{ background: "radial-gradient(circle, rgba(255,59,59,0.06) 0%, transparent 70%)" }} />
       </div>
       <div className="relative z-10 text-center space-y-4">
-        <h1 className="font-display text-[10vw] text-gradient">{gym?.name || "FITACCESS"}</h1>
+        {gym?.logo_url
+          ? <img src={gym.logo_url} alt={gym.name} className="max-h-[12vw] max-w-[50vw] object-contain mx-auto" />
+          : <h1 className="font-display text-[10vw] text-gradient">{gym?.name || "FITACCESS"}</h1>}
         <p className="text-[2vw] text-white/40 font-light tracking-widest uppercase">Control inteligente de acceso</p>
         <div className="mt-6 text-[7vw] font-bold text-white tabular-nums">
           {currentTime.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
         </div>
         <p className="text-[1.5vw] text-white/40">{currentTime.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
         <p className="mt-8 text-[1.5vw] text-white/25 animate-pulse tracking-widest">ESPERANDO ESCANEO QR...</p>
-      </div>
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-10 py-5 border-t border-white/10">
-        <p className="text-[1.1vw] text-white/25 tracking-wide">Sistema creado por <span className="text-white/40 font-semibold">Soluciones FML</span></p>
-        {gym?.logo_url && <img src={gym.logo_url} alt={gym.name} className="max-h-[4vw] max-w-[14vw] object-contain opacity-70" />}
       </div>
     </div>
   );
@@ -74,7 +71,9 @@ export function NeonPanelsIdle({ gym, currentTime }) {
     <div className="absolute inset-0 bg-[#080810] flex flex-col">
       {/* Header bar */}
       <div className="flex items-center justify-between px-12 py-6 border-b border-white/10">
-        <h1 className="font-display text-[5vw] text-gradient">{gym?.name || "FITACCESS"}</h1>
+        {gym?.logo_url
+          ? <img src={gym.logo_url} alt={gym.name} className="max-h-[6vw] object-contain" />
+          : <h1 className="font-display text-[5vw] text-gradient">{gym?.name || "FITACCESS"}</h1>}
         <div className="text-right">
           <p className="text-[4vw] font-bold text-white tabular-nums">
             {currentTime.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
@@ -89,11 +88,6 @@ export function NeonPanelsIdle({ gym, currentTime }) {
           <p className="text-[2vw] text-white/30 tracking-[0.5em] uppercase mb-4">Sistema de Acceso</p>
           <p className="text-[1.5vw] text-white/20 animate-pulse tracking-widest mt-8">⬛ Esperando escaneo QR...</p>
         </div>
-      </div>
-      {/* Bottom bar */}
-      <div className="flex items-center justify-between px-12 py-4 border-t border-white/10">
-        <p className="text-[1.1vw] text-white/25 tracking-wide">Sistema creado por <span className="text-white/40 font-semibold">Soluciones FML</span></p>
-        {gym?.logo_url && <img src={gym.logo_url} alt={gym.name} className="max-h-[4vw] max-w-[14vw] object-contain opacity-70" />}
       </div>
     </div>
   );
@@ -131,7 +125,9 @@ export function DarkEleganceIdle({ gym, currentTime }) {
     <div className="absolute inset-0 bg-[#080808] flex flex-col items-center justify-center">
       <div className="text-center space-y-6">
         <div className="w-24 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
-        <h1 className="font-display text-[11vw] text-white leading-none">{gym?.name || "FITACCESS"}</h1>
+        {gym?.logo_url
+          ? <img src={gym.logo_url} alt={gym.name} className="max-h-[14vw] max-w-[55vw] object-contain mx-auto" />
+          : <h1 className="font-display text-[11vw] text-white leading-none">{gym?.name || "FITACCESS"}</h1>}
         <div className="w-24 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
         <p className="text-[1.4vw] text-white/30 tracking-[0.4em] uppercase">Control inteligente de acceso</p>
         <div className="mt-10 text-[8vw] font-thin text-white/80 tabular-nums tracking-widest">
@@ -139,11 +135,6 @@ export function DarkEleganceIdle({ gym, currentTime }) {
         </div>
         <p className="text-[1.3vw] text-white/25">{currentTime.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
         <p className="mt-12 text-[1.2vw] text-white/15 tracking-[0.6em] animate-pulse uppercase">Esperando escaneo QR</p>
-      </div>
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-10 py-5 border-t border-white/5">
-        <p className="text-[1.1vw] text-white/20 tracking-wide">Sistema creado por <span className="text-white/35 font-semibold">Soluciones FML</span></p>
-        {gym?.logo_url && <img src={gym.logo_url} alt={gym.name} className="max-h-[4vw] max-w-[14vw] object-contain opacity-60" />}
       </div>
     </div>
   );
@@ -186,7 +177,9 @@ export function DynamicGeometryIdle({ gym, currentTime }) {
       <div className="absolute bottom-0 left-0 w-24 h-24 border-b-2 border-l-2 border-primary/40" />
       <div className="absolute bottom-0 right-0 w-24 h-24 border-b-2 border-r-2 border-primary/40" />
       <div className="relative z-10 text-center space-y-4">
-        <h1 className="font-display text-[10vw] text-gradient skew-x-[-3deg] inline-block">{gym?.name || "FITACCESS"}</h1>
+        {gym?.logo_url
+          ? <img src={gym.logo_url} alt={gym.name} className="max-h-[12vw] max-w-[50vw] object-contain mx-auto" />
+          : <h1 className="font-display text-[10vw] text-gradient skew-x-[-3deg] inline-block">{gym?.name || "FITACCESS"}</h1>}
         <p className="text-[1.5vw] text-white/40 tracking-widest uppercase">Control inteligente de acceso</p>
         <div className="mt-8 flex items-center gap-6 justify-center">
           <div className="w-8 h-0.5 bg-primary/50" />
@@ -195,11 +188,6 @@ export function DynamicGeometryIdle({ gym, currentTime }) {
         </div>
         <p className="text-[1.3vw] text-white/35">{currentTime.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
         <p className="mt-10 text-[1.3vw] text-white/20 tracking-[0.5em] animate-pulse uppercase">⬥ Esperando escaneo QR ⬥</p>
-      </div>
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-10 py-5 border-t border-white/10 z-10">
-        <p className="text-[1.1vw] text-white/25 tracking-wide">Sistema creado por <span className="text-white/40 font-semibold">Soluciones FML</span></p>
-        {gym?.logo_url && <img src={gym.logo_url} alt={gym.name} className="max-h-[4vw] max-w-[14vw] object-contain opacity-70" />}
       </div>
     </div>
   );
