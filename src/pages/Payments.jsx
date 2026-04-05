@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle, Clock, Plus, Search } from "lucide-react";
+import ExportMenu from "@/components/ExportMenu";
 import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,19 @@ export default function Payments() {
     return matchSearch && matchFilter && matchFrom && matchTo;
   });
 
+  const payHeaders = ["Cliente", "Plan", "Monto", "Fecha", "Estado"];
+  const toPayRows = (list) => list.map(p => [
+    toTitleCase(p.client_name), p.plan_name, `$${p.amount?.toLocaleString('es-CL')}`,
+    p.date ? format(new Date(p.date), 'dd/MM/yyyy') : "",
+    p.confirmed ? "Confirmado" : "Pendiente"
+  ]);
+
+  const exportOptions = [
+    { label: "Pagos del mes", filename: `pagos_mes_${monthStart.slice(0,7)}`, headers: payHeaders, rows: toPayRows(monthPayments) },
+    { label: "Todos los pagos confirmados", filename: `pagos_confirmados`, headers: payHeaders, rows: toPayRows(confirmedAll) },
+    { label: "Vista actual (filtrada)", filename: `pagos_filtrado`, headers: payHeaders, rows: toPayRows(filtered) },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -48,9 +62,12 @@ export default function Payments() {
           <h1 className="text-3xl font-bold text-white">Pagos</h1>
           <p className="text-muted-foreground mt-1">Gestión de pagos y membresías</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Pago
-        </Button>
+        <div className="flex gap-2">
+          <ExportMenu options={exportOptions} />
+          <Button onClick={() => setShowCreate(true)} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
+            <Plus className="w-4 h-4" /> Nuevo Pago
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-2">

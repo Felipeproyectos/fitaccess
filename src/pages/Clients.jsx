@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Search, Edit2, Eye, Phone, Mail } from "lucide-react";
+import ExportMenu from "@/components/ExportMenu";
 import BulkImportModal from "@/components/BulkImportModal";
 import BulkActivationModal from "@/components/BulkActivationModal";
 import { toTitleCase } from "@/utils";
@@ -48,6 +49,23 @@ export default function Clients() {
   function openEdit(client) { setEditClient(client); setShowModal(true); }
   function openCreate() { setEditClient(null); setShowModal(true); }
 
+  const clientHeaders = ["Nombre", "Email", "Teléfono", "Estado", "Plan Activo"];
+  const clientRows = filtered.map(c => {
+    const mem = getClientMembership(c.id);
+    const isExpired = mem && (mem.status === 'expired' || (mem.remaining_accesses !== undefined && mem.remaining_accesses <= 0));
+    return [
+      toTitleCase(c.name), c.email ?? "", c.phone ?? "",
+      isExpired ? "Vencido" : c.active !== false ? "Activo" : "Inactivo",
+      mem ? mem.plan_name + (mem.end_date ? ` (vence ${mem.end_date})` : "") : "Sin membresía"
+    ];
+  });
+
+  const exportOptions = [
+    { label: "Clientes activos", filename: "clientes_activos", headers: clientHeaders, rows: clientRows.filter((_, i) => filtered[i]?.active !== false) },
+    { label: "Todos los clientes", filename: "clientes_todos", headers: clientHeaders, rows: clientRows },
+    { label: "Vista actual (filtrada)", filename: "clientes_filtrado", headers: clientHeaders, rows: clientRows },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -56,6 +74,7 @@ export default function Clients() {
           <p className="text-muted-foreground mt-1">{clients.length} clientes registrados</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <ExportMenu options={exportOptions} />
           <Button variant="outline" onClick={() => setShowBulkActivation(true)} className="gap-2">
             🚀 Activación Masiva
           </Button>

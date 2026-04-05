@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { toTitleCase } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Search, Calendar } from "lucide-react";
+import ExportMenu from "@/components/ExportMenu";
+import { format, startOfMonth } from "date-fns";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
 
 export default function Attendance() {
   const [attendances, setAttendances] = useState([]);
@@ -33,11 +34,33 @@ export default function Attendance() {
     invalid: { label: "🚫 Inválido", cls: "bg-red-400/20 text-red-400" },
   };
 
+  const today = format(new Date(), "yyyy-MM-dd");
+  const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const attendancesToday = attendances.filter(a => a.date === today || a.created_date?.startsWith(today));
+  const attendancesMonth = attendances.filter(a => (a.date || "") >= monthStart || (a.created_date || "") >= monthStart);
+
+  const exportHeaders = ["Cliente", "Fecha", "Accesos Restantes", "Estado"];
+  const toRows = (list) => list.map(a => [
+    toTitleCase(a.client_name),
+    a.created_date ? new Date(a.created_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : a.date,
+    a.remaining_accesses ?? "—",
+    { success: "Exitosa", expiring: "Por vencer", expired: "Vencida", invalid: "Inválido" }[a.scan_result] || a.scan_result
+  ]);
+
+  const exportOptions = [
+    { label: "Asistencias de hoy", filename: `asistencias_hoy_${today}`, headers: exportHeaders, rows: toRows(attendancesToday) },
+    { label: `Asistencias del mes`, filename: `asistencias_mes_${monthStart.slice(0,7)}`, headers: exportHeaders, rows: toRows(attendancesMonth) },
+    { label: "Vista actual (filtrada)", filename: `asistencias_filtrado`, headers: exportHeaders, rows: toRows(filtered) },
+  ];
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Historial de Asistencias</h1>
-        <p className="text-muted-foreground mt-1">{filtered.length} registros</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Historial de Asistencias</h1>
+          <p className="text-muted-foreground mt-1">{filtered.length} registros</p>
+        </div>
+        <ExportMenu options={exportOptions} />
       </div>
 
       <div className="flex gap-3 flex-wrap">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Edit2, Trash2, Dumbbell } from "lucide-react";
+import ExportMenu from "@/components/ExportMenu";
 import { Button } from "@/components/ui/button";
 import PlanModal from "@/components/PlanModal";
 
@@ -28,6 +29,16 @@ export default function Memberships() {
   const typeColors2 = { single_pass: "text-cyan-400 bg-cyan-400/10", free_pass: "text-teal-400 bg-teal-400/10" };
   const typeColors = { unlimited: "text-blue-400 bg-blue-400/10", limited: "text-purple-400 bg-purple-400/10", weekly: "text-yellow-400 bg-yellow-400/10", monthly: "text-green-400 bg-green-400/10", custom: "text-pink-400 bg-pink-400/10" };
 
+  const planHeaders = ["Nombre", "Tipo", "Duración (días)", "Accesos", "Precio"];
+  const planRows = plans.map(p => [
+    p.name, typeLabels[p.type] || p.type, p.duration_days ?? "",
+    p.max_accesses ?? "Ilimitado", `$${p.price?.toLocaleString('es-CL')}`
+  ]);
+
+  const exportOptions = [
+    { label: "Planes de Membresía", filename: "planes_membresia", headers: planHeaders, rows: planRows },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -35,9 +46,12 @@ export default function Memberships() {
           <h1 className="text-3xl font-bold text-white">Planes de Membresía</h1>
           <p className="text-muted-foreground mt-1">Configura los planes disponibles</p>
         </div>
-        <Button onClick={() => { setEditPlan(null); setShowModal(true); }} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Plan
-        </Button>
+        <div className="flex gap-2">
+          <ExportMenu options={exportOptions} />
+          <Button onClick={() => { setEditPlan(null); setShowModal(true); }} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
+            <Plus className="w-4 h-4" /> Nuevo Plan
+          </Button>
+        </div>
       </div>
 
       {loading ? (
