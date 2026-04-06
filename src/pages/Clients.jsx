@@ -49,19 +49,18 @@ export default function Clients() {
   function openEdit(client) { setEditClient(client); setShowModal(true); }
   function openCreate() { setEditClient(null); setShowModal(true); }
 
-  const clientHeaders = ["Nombre", "Email", "Teléfono", "Estado", "Plan Activo"];
-  const clientRows = filtered.map(c => {
-    const mem = getClientMembership(c.id);
-    const isExpired = mem && (mem.status === 'expired' || (mem.remaining_accesses !== undefined && mem.remaining_accesses <= 0));
-    return [
-      toTitleCase(c.name), c.email ?? "", c.phone ?? "",
-      isExpired ? "Vencido" : c.active !== false ? "Activo" : "Inactivo",
-      mem ? mem.plan_name + (mem.end_date ? ` (vence ${mem.end_date})` : "") : "Sin membresía"
-    ];
-  });
+  const clientHeaders = ["Nombre Completo", "RUT", "Correo", "Número Teléfono", "Notas"];
+  const clientRows = filtered.map(c => [
+    toTitleCase(c.name),
+    c.rut ?? "",
+    c.email ?? "",
+    c.phone ?? "",
+    c.notes ?? ""
+  ]);
 
   const exportOptions = [
-    { label: "Clientes activos", filename: "clientes_activos", headers: clientHeaders, rows: clientRows.filter((_, i) => filtered[i]?.active !== false) },
+
+    { label: "Clientes activos", filename: "clientes_activos", headers: clientHeaders, rows: clientRows.filter((_, i) => filtered[i]?.active !== false), templateHeaders: clientHeaders },
     { label: "Todos los clientes", filename: "clientes_todos", headers: clientHeaders, rows: clientRows },
     { label: "Vista actual (filtrada)", filename: "clientes_filtrado", headers: clientHeaders, rows: clientRows },
   ];
