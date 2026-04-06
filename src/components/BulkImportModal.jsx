@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 
 function downloadTemplate() {
-  const headers = ["Nombre Completo", "RUT", "Correo", "Número Teléfono", "Notas"];
-  const example = ["Juan Pérez", "12.345.678-9", "juan@email.com", "+56912345678", "Cliente nuevo"];
+  const headers = ["Nombre Completo", "RUT", "Correo", "Numero Telefono", "Notas"];
+  const example = ["Juan Perez", "12.345.678-9", "juan@email.com", "+56912345678", "Cliente nuevo"];
   const ws = XLSX.utils.aoa_to_sheet([headers, example]);
   ws["!cols"] = headers.map(() => ({ wch: 22 }));
   const wb = XLSX.utils.book_new();
@@ -53,7 +53,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
       const keys = Object.keys(r);
       const get = (...names) => {
         for (const n of names) {
-          const k = keys.find(k => k.toLowerCase().includes(n));
+          const k = keys.find(key => key.toLowerCase().includes(n));
           if (k) return r[k] || "";
         }
         return "";
@@ -75,7 +75,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
       const rowErrors = [];
       if (!row.nombre?.trim()) rowErrors.push("Nombre obligatorio");
       if (row.email) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) rowErrors.push("Email inválido");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) rowErrors.push("Email invalido");
         else if (existingEmails.has(row.email.toLowerCase())) rowErrors.push("Email ya registrado");
         else if (emailsSeen.has(row.email.toLowerCase())) rowErrors.push("Email duplicado en archivo");
         emailsSeen.add(row.email.toLowerCase());
@@ -113,7 +113,8 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
   }
 
   function handleDrop(e) {
-    e.preventDefault(); setDragging(false);
+    e.preventDefault();
+    setDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) processFile(file);
   }
@@ -122,8 +123,10 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-white">📥 Carga Masiva de Clientes</h2>
-          <Button size="icon" variant="ghost" onClick={onClose}><X className="w-4 h-4" /></Button>
+          <h2 className="text-xl font-bold text-white">Carga Masiva de Clientes</h2>
+          <Button size="icon" variant="ghost" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -131,8 +134,8 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
             <>
               <div className="bg-background border border-border rounded-xl p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-white text-sm">Paso 1 — Descarga la plantilla</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Columnas: Nombre Completo, RUT, Correo, Número Teléfono, Notas</p>
+                  <p className="font-medium text-white text-sm">Paso 1 - Descarga la plantilla</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Columnas: Nombre Completo, RUT, Correo, Numero Telefono, Notas</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2 shrink-0">
                   <Download className="w-4 h-4" /> Descargar Plantilla
@@ -147,7 +150,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
                 onClick={() => fileRef.current?.click()}
               >
                 <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-white font-medium">Arrastra tu archivo aquí o haz clic</p>
+                <p className="text-white font-medium">Arrastra tu archivo aqui o haz clic</p>
                 <p className="text-xs text-muted-foreground mt-1">Soporta .xlsx y .csv</p>
                 {loading && <p className="text-primary text-sm mt-3 animate-pulse">Procesando archivo...</p>}
                 <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
@@ -160,16 +163,22 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
             <>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-white font-medium">
-                  {rows.length} filas encontradas · <span className="text-red-400">{Object.keys(errors).length} con errores</span> · <span className="text-green-400">{rows.length - Object.keys(errors).length} válidas</span>
+                  {rows.length} filas encontradas
+                  {" · "}<span className="text-red-400">{Object.keys(errors).length} con errores</span>
+                  {" · "}<span className="text-green-400">{rows.length - Object.keys(errors).length} validas</span>
                 </p>
-                <Button variant="ghost" size="sm" onClick={() => setStep("upload")} className="text-muted-foreground">← Volver</Button>
+                <Button variant="ghost" size="sm" onClick={() => setStep("upload")} className="text-muted-foreground">
+                  Volver
+                </Button>
               </div>
               <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <thead className="bg-background">
-                    <tr>{["Nombre Completo", "RUT", "Correo", "Teléfono", "Notas", "Estado"].map(h => (
-                      <th key={h} className="text-left px-3 py-2 text-xs text-muted-foreground font-medium">{h}</th>
-                    ))}</tr>
+                    <tr>
+                      {["Nombre", "RUT", "Correo", "Telefono", "Notas", "Estado"].map(h => (
+                        <th key={h} className="text-left px-3 py-2 text-xs text-muted-foreground font-medium">{h}</th>
+                      ))}
+                    </tr>
                   </thead>
                   <tbody>
                     {rows.map((r, i) => (
@@ -182,16 +191,20 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
                         <td className="px-3 py-2">
                           {errors[i]
                             ? <span className="text-red-400 text-xs flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors[i].join(", ")}</span>
-                            : <span className="text-green-400 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" />OK</span>}
+                            : <span className="text-green-400 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" />OK</span>
+                          }
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <Button onClick={confirmImport} disabled={loading || rows.length - Object.keys(errors).length === 0}
-                className="w-full bg-primary hover:bg-primary/90 text-white">
-                {loading ? "Importando..." : `Confirmar Importación (${rows.length - Object.keys(errors).length} clientes)`}
+              <Button
+                onClick={confirmImport}
+                disabled={loading || rows.length - Object.keys(errors).length === 0}
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+              >
+                {loading ? "Importando..." : `Confirmar Importacion (${rows.length - Object.keys(errors).length} clientes)`}
               </Button>
             </>
           )}
@@ -199,7 +212,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
           {step === "done" && (
             <div className="text-center py-8 space-y-4">
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto" />
-              <h3 className="text-xl font-bold text-white">¡Importación completada!</h3>
+              <h3 className="text-xl font-bold text-white">Importacion completada!</h3>
               <p className="text-green-400 font-medium">{result.created} clientes creados exitosamente</p>
               {result.failed > 0 && <p className="text-red-400">{result.failed} filas omitidas por errores</p>}
               <Button onClick={onClose} className="mt-4">Cerrar</Button>
