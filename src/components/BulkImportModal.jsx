@@ -2,23 +2,20 @@ import { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { X, Download, Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import * as XLSX from "xlsx";
 
 function downloadTemplate() {
-  const rows = [
-    ["Nombre", "Email", "Teléfono", "Notas"],
-    ["Juan Pérez", "juan@email.com", "+56912345678", "Cliente nuevo"],
-  ];
-  const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "plantilla_clientes.csv"; a.click();
-  URL.revokeObjectURL(url);
+  const headers = ["Nombre Completo", "RUT", "Correo", "Número Teléfono", "Notas"];
+  const example = ["Juan Pérez", "12.345.678-9", "juan@email.com", "+56912345678", "Cliente nuevo"];
+  const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+  ws["!cols"] = headers.map(() => ({ wch: 22 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Clientes");
+  XLSX.writeFile(wb, "plantilla_clientes.xlsx");
 }
 
 export default function BulkImportModal({ onClose, onImported, gymId }) {
-  const [step, setStep] = useState("upload"); // upload | preview | done
+  const [step, setStep] = useState("upload");
   const [rows, setRows] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -40,6 +37,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
               type: "object",
               properties: {
                 nombre: { type: "string" },
+                rut: { type: "string" },
                 email: { type: "string" },
                 telefono: { type: "string" },
                 notas: { type: "string" }
@@ -51,7 +49,6 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
     });
 
     const parsed = res.output?.rows || (Array.isArray(res.output) ? res.output : []);
-    // normalize keys
     const normalized = parsed.map(r => {
       const keys = Object.keys(r);
       const get = (...names) => {
@@ -63,13 +60,13 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
       };
       return {
         nombre: get("nombre", "name"),
+        rut: get("rut"),
         email: get("email", "correo"),
-        telefono: get("tel", "phone", "fono"),
+        telefono: get("tel", "phone", "fono", "numero"),
         notas: get("nota", "note", "observ")
       };
     }).filter(r => r.nombre?.trim());
 
-    // validate
     const existingClients = await base44.entities.Client.list("-created_date", 500);
     const existingEmails = new Set(existingClients.map(c => c.email?.toLowerCase()).filter(Boolean));
     const errs = {};
@@ -94,11 +91,12 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
 
   async function confirmImport() {
     setLoading(true);
-    let created = 0, failed = 0;
+    let created = 0;
     const validRows = rows.filter((_, i) => !errors[i]);
     for (const row of validRows) {
       await base44.entities.Client.create({
         name: row.nombre.trim(),
+        rut: row.rut?.trim() || undefined,
         email: row.email?.trim() || undefined,
         phone: row.telefono?.trim() || undefined,
         notes: row.notas?.trim() || undefined,
@@ -107,7 +105,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
       });
       created++;
     }
-    failed = Object.keys(errors).length;
+    const failed = Object.keys(errors).length;
     setResult({ created, failed });
     setStep("done");
     setLoading(false);
@@ -134,7 +132,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
               <div className="bg-background border border-border rounded-xl p-4 flex items-center justify-between">
                 <div>
                   <p className="font-medium text-white text-sm">Paso 1 — Descarga la plantilla</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Columnas: Nombre, Email, Teléfono, Notas</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Columnas: Nombre Completo, RUT, Correo, Número Teléfono, Notas</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2 shrink-0">
                   <Download className="w-4 h-4" /> Descargar Plantilla
@@ -150,7 +148,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
               >
                 <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-white font-medium">Arrastra tu archivo aquí o haz clic</p>
-                <p className="text-xs text-muted-foreground mt-1">Soporta .csv y .xlsx</p>
+                <p className="text-xs text-muted-foreground mt-1">Soporta .xlsx y .csv</p>
                 {loading && <p className="text-primary text-sm mt-3 animate-pulse">Procesando archivo...</p>}
                 <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
                   onChange={e => e.target.files[0] && processFile(e.target.files[0])} />
@@ -161,13 +159,15 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
           {step === "preview" && (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-sm text-white font-medium">{rows.length} filas encontradas · <span className="text-red-400">{Object.keys(errors).length} con errores</span> · <span className="text-green-400">{rows.length - Object.keys(errors).length} válidas</span></p>
+                <p className="text-sm text-white font-medium">
+                  {rows.length} filas encontradas · <span className="text-red-400">{Object.keys(errors).length} con errores</span> · <span className="text-green-400">{rows.length - Object.keys(errors).length} válidas</span>
+                </p>
                 <Button variant="ghost" size="sm" onClick={() => setStep("upload")} className="text-muted-foreground">← Volver</Button>
               </div>
               <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <thead className="bg-background">
-                    <tr>{["Nombre","Email","Teléfono","Notas","Estado"].map(h => (
+                    <tr>{["Nombre Completo", "RUT", "Correo", "Teléfono", "Notas", "Estado"].map(h => (
                       <th key={h} className="text-left px-3 py-2 text-xs text-muted-foreground font-medium">{h}</th>
                     ))}</tr>
                   </thead>
@@ -175,6 +175,7 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
                     {rows.map((r, i) => (
                       <tr key={i} className={`border-t border-border ${errors[i] ? "bg-red-500/5" : ""}`}>
                         <td className="px-3 py-2 text-white">{r.nombre}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{r.rut}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.telefono}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.notas}</td>
