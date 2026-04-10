@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 export default function ClientModal({ client, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: client?.name || "",
+    rut: client?.rut || "",
     email: client?.email || "",
     phone: client?.phone || "",
     notes: client?.notes || "",
@@ -52,6 +53,11 @@ export default function ClientModal({ client, onClose, onSaved }) {
           <div>
             <Label className="text-muted-foreground mb-1.5 block">Nombre *</Label>
             <Input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Juan Pérez"
+              className="bg-background border-border text-white" />
+          </div>
+          <div>
+            <Label className="text-muted-foreground mb-1.5 block">RUT</Label>
+            <Input value={form.rut} onChange={e => set("rut", e.target.value)} placeholder="12.345.678-9"
               className="bg-background border-border text-white" />
           </div>
           <div>
