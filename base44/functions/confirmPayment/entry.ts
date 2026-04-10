@@ -127,10 +127,18 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      base44.asServiceRole.integrations.Core.SendEmail({
-        to: client.email,
-        subject: `Membresia activada - ${plan.name}`,
-        body: emailBody
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'FitAccess <onboarding@resend.dev>',
+          to: [client.email],
+          subject: `Membresia activada - ${plan.name}`,
+          html: emailBody
+        })
       }).catch(() => {});
     }
 
