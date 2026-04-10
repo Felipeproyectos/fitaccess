@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Edit2, Eye, Phone, Mail } from "lucide-react";
+import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2 } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import BulkImportModal from "@/components/BulkImportModal";
 import BulkActivationModal from "@/components/BulkActivationModal";
@@ -20,6 +20,8 @@ export default function Clients() {
   const [viewClient, setViewClient] = useState(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showBulkActivation, setShowBulkActivation] = useState(false);
+  const [tab, setTab] = useState("active");
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => { loadClients(); }, []);
 
@@ -40,7 +42,11 @@ export default function Clients() {
     return memberships.find(m => m.client_id === clientId);
   }
 
-  const filtered = clients.filter(c =>
+  const activeClients = clients.filter(c => c.active !== false);
+  const inactiveClients = clients.filter(c => c.active === false);
+  const tabClients = tab === "active" ? activeClients : inactiveClients;
+
+  const filtered = tabClients.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
     c.email?.toLowerCase().includes(search.toLowerCase()) ||
     c.phone?.includes(search)
@@ -48,6 +54,14 @@ export default function Clients() {
 
   function openEdit(client) { setEditClient(client); setShowModal(true); }
   function openCreate() { setEditClient(null); setShowModal(true); }
+
+  async function handleDelete(client) {
+    if (!confirm(`¿Eliminar permanentemente a ${toTitleCase(client.name)}? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(client.id);
+    await base44.entities.Client.delete(client.id);
+    setDeletingId(null);
+    setClients(prev => prev.filter(c => c.id !== client.id));
+  }
 
   const clientHeaders = ["Nombre Completo", "RUT", "Correo", "Número Teléfono", "Notas"];
   const clientRows = filtered.map(c => [
@@ -86,6 +100,22 @@ export default function Clients() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-card border border-border rounded-xl p-1 w-fit">
+        <button onClick={() => setTab("active")}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            tab === "active" ? "bg-primary text-white" : "text-muted-foreground hover:text-white"
+          }`}>
+          Activos ({activeClients.length})
+        </button>
+        <button onClick={() => setTab("inactive")}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            tab === "inactive" ? "bg-primary text-white" : "text-muted-foreground hover:text-white"
+          }`}>
+          Inactivos ({inactiveClients.length})
+        </button>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -114,6 +144,9 @@ export default function Clients() {
                   </Button>
                   <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => openEdit(client)}>
                     <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-red-400/10" onClick={() => handleDelete(client)} disabled={deletingId === client.id}>
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
                   </Button>
                 </div>
               </div>
