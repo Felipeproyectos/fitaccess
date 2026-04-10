@@ -118,6 +118,12 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                 <p className="text-sm text-muted-foreground">{client.phone}</p>
               </div>
             )}
+            {client.rut && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-xs text-muted-foreground font-medium">RUT:</span>
+                <p className="text-sm text-muted-foreground font-mono">{client.rut}</p>
+              </div>
+            )}
           </div>
         </div>
 
