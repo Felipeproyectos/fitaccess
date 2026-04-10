@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 export default function QRScanner() {
   const [input, setInput] = useState("");
   const [manualToken, setManualToken] = useState("");
+  const [manualRut, setManualRut] = useState("");
   const [lastResult, setLastResult] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [recentScans, setRecentScans] = useState([]);
@@ -73,6 +74,20 @@ export default function QRScanner() {
     }
   }
 
+  async function processRut(rut) {
+    if (processingRef.current) return;
+    setProcessing(true);
+    try {
+      const result = await base44.functions.invoke("processManualAttendance", { rut });
+      setLastResult(result.data);
+      loadRecentScans();
+    } catch (err) {
+      setLastResult({ status: "error", message: "Error al procesar RUT" });
+    }
+    setProcessing(false);
+    setTimeout(() => setLastResult(null), 8000);
+  }
+
   async function processToken(token) {
     if (processingRef.current) return;
     setProcessing(true);
@@ -120,6 +135,27 @@ export default function QRScanner() {
           Apunta el lector QR hacia el código del cliente. El acceso se valida automáticamente.
         </p>
         {input && <p className="text-xs text-muted-foreground font-mono bg-muted/50 px-3 py-1 rounded inline-block">{input}</p>}
+      </div>
+
+      {/* Manual RUT input */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <p className="text-sm font-semibold text-white mb-3">Asistencia manual por RUT</p>
+        <div className="flex gap-2">
+          <Input
+            value={manualRut}
+            onChange={e => setManualRut(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && manualRut.trim()) { processRut(manualRut.trim()); setManualRut(""); } }}
+            placeholder="Ej: 12.345.678-9"
+            className="bg-background border-border text-white text-sm"
+          />
+          <Button
+            onClick={() => { if (manualRut.trim()) { processRut(manualRut.trim()); setManualRut(""); } }}
+            disabled={processing || !manualRut.trim()}
+            className="shrink-0"
+          >
+            Registrar
+          </Button>
+        </div>
       </div>
 
       {/* Manual token input */}

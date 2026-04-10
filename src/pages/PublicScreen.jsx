@@ -50,10 +50,13 @@ export default function PublicScreen() {
   const [slideshowImages, setSlideshowImages] = useState([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [rutInput, setRutInput] = useState("");
+  const [rutProcessing, setRutProcessing] = useState(false);
   const idleTimer = useRef(null);
   const scanBuffer = useRef("");
   const scanTimer = useRef(null);
   const processingRef = useRef(false);
+  const rutInputRef = useRef(null);
 
   useEffect(() => {
     loadGym();
@@ -65,6 +68,8 @@ export default function PublicScreen() {
     });
 
     function handleKeyDown(e) {
+      // Don't capture if RUT input is focused
+      if (document.activeElement === rutInputRef.current) return;
       if (e.key === "Enter") {
         clearTimeout(scanTimer.current);
         const token = scanBuffer.current.trim();
@@ -106,6 +111,20 @@ export default function PublicScreen() {
     processingRef.current = false;
   }
 
+  async function processRut() {
+    const rut = rutInput.trim();
+    if (!rut || rutProcessing) return;
+    setRutProcessing(true);
+    setRutInput("");
+    try {
+      const res = await base44.functions.invoke("processManualAttendance", { rut });
+      if (res.data) showScanResult({ ...res.data, scan_result: res.data.status });
+    } catch {
+      showScanResult({ scan_result: "invalid", client_name: "Error de lectura", remaining_accesses: null });
+    }
+    setRutProcessing(false);
+  }
+
   async function loadGym() {
     const gyms = await base44.entities.Gym.list("-created_date", 1);
     if (gyms.length > 0) {
@@ -144,10 +163,44 @@ export default function PublicScreen() {
                     initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                     transition={{ duration: 1 }} className="absolute inset-0 w-full h-full object-cover" />
                 </AnimatePresence>
-                <div className="absolute bottom-8 w-full text-center text-white/50 text-xl animate-pulse">Esperando escaneo QR...</div>
+                <div className="absolute bottom-16 w-full text-center text-white/50 text-xl animate-pulse">Esperando escaneo QR...</div>
+                <div className="absolute bottom-4 w-full flex justify-center px-8">
+                  <div className="flex gap-2 bg-black/60 backdrop-blur rounded-xl px-4 py-3">
+                    <input
+                      ref={rutInputRef}
+                      value={rutInput}
+                      onChange={e => setRutInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') processRut(); }}
+                      placeholder="Ingresa RUT para acceso manual..."
+                      className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm w-64 outline-none focus:border-white/50"
+                    />
+                    <button onClick={processRut} disabled={rutProcessing || !rutInput.trim()}
+                      className="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm disabled:opacity-40 transition-colors">
+                      {rutProcessing ? "..." : "Registrar"}
+                    </button>
+                  </div>
+                </div>
               </>
             ) : (
-              <Design.Idle gym={gym} currentTime={currentTime} />
+              <>
+                <Design.Idle gym={gym} currentTime={currentTime} />
+                <div className="absolute bottom-8 w-full flex justify-center px-8">
+                  <div className="flex gap-2 bg-black/60 backdrop-blur rounded-xl px-4 py-3">
+                    <input
+                      ref={rutInputRef}
+                      value={rutInput}
+                      onChange={e => setRutInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') processRut(); }}
+                      placeholder="Ingresa RUT para acceso manual..."
+                      className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm w-64 outline-none focus:border-white/50"
+                    />
+                    <button onClick={processRut} disabled={rutProcessing || !rutInput.trim()}
+                      className="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm disabled:opacity-40 transition-colors">
+                      {rutProcessing ? "..." : "Registrar"}
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </motion.div>
         ) : (
