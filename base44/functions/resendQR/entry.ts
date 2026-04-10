@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     // Fetch client and active QR in parallel
     const [clientsArr, qrCodes] = await Promise.all([
       base44.asServiceRole.entities.Client.filter({ id: client_id }),
-      base44.asServiceRole.entities.QRCode.filter({ client_id, active: true }, '-created_date', 1)
+      base44.asServiceRole.entities.QRCode.filter({ client_id, active: true })
     ]);
 
     const client = clientsArr[0];
