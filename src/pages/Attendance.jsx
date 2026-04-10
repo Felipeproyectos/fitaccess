@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toTitleCase } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { Search, Calendar } from "lucide-react";
+import { Search, Calendar, Trash2 } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import { format, startOfMonth } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,12 @@ export default function Attendance() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === 'admin')).catch(() => {});
+  }, []);
 
   useEffect(() => { loadAttendances(); }, [dateFilter]);
 
@@ -21,6 +27,24 @@ export default function Attendance() {
       : await base44.entities.Attendance.list("-created_date", 200);
     setAttendances(data);
     setLoading(false);
+  }
+
+  async function handleDelete(attendance) {
+    if (!confirm(`¿Eliminar esta asistencia de ${toTitleCase(attendance.client_name)}? El acceso será restaurado.`)) return;
+    setDeletingId(attendance.id);
+    await base44.entities.Attendance.delete(attendance.id);
+    // Restore access on membership if it was a limited plan
+    if (attendance.membership_id) {
+      const memberships = await base44.entities.Membership.filter({ id: attendance.membership_id });
+      const m = memberships[0];
+      if (m && m.remaining_accesses !== null && m.remaining_accesses !== undefined) {
+        const newRemaining = (m.remaining_accesses || 0) + 1;
+        const newStatus = newRemaining > 3 ? 'active' : m.status;
+        await base44.entities.Membership.update(m.id, { remaining_accesses: newRemaining, status: newStatus });
+      }
+    }
+    setDeletingId(null);
+    setAttendances(prev => prev.filter(a => a.id !== attendance.id));
   }
 
   const filtered = attendances.filter(a =>
@@ -92,6 +116,7 @@ export default function Attendance() {
                 <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Fecha</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Accesos Rest.</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
+                {isAdmin && <th className="px-5 py-3" />}
               </tr>
             </thead>
             <tbody>
@@ -109,10 +134,21 @@ export default function Attendance() {
                       {resultConfig[a.scan_result]?.label || a.scan_result}
                     </span>
                   </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-12 text-muted-foreground">No hay asistencias registradas</td></tr>
+                   {isAdmin && (
+                     <td className="px-5 py-3 text-right">
+                       <button
+                         onClick={() => handleDelete(a)}
+                         disabled={deletingId === a.id}
+                         className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
+                     </td>
+                   )}
+                  </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                <tr><td colSpan={isAdmin ? 5 : 4} className="text-center py-12 text-muted-foreground">No hay asistencias registradas</td></tr>
               )}
             </tbody>
           </table>
