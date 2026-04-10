@@ -9,24 +9,22 @@ Deno.serve(async (req) => {
     const { client_id } = await req.json();
     if (!client_id) return Response.json({ error: 'client_id requerido' }, { status: 400 });
 
-    // Get client
-    const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
-    const client = clients[0];
+    // Fetch client and active QR in parallel
+    const [clientsArr, qrCodes] = await Promise.all([
+      base44.asServiceRole.entities.Client.filter({ id: client_id }),
+      base44.asServiceRole.entities.QRCode.filter({ client_id, active: true }, '-created_date', 1)
+    ]);
+
+    const client = clientsArr[0];
     if (!client) return Response.json({ error: 'Cliente no encontrado' }, { status: 404 });
-
     if (!client.email) return Response.json({ error: 'El cliente no tiene email registrado' }, { status: 400 });
-
-    // Get active QR
-    const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ client_id, active: true }, '-created_date', 1);
     if (!qrCodes.length) return Response.json({ error: 'No hay QR activo para este cliente' }, { status: 404 });
 
     const qr = qrCodes[0];
-
-    // Get active membership
     const memberships = await base44.asServiceRole.entities.Membership.filter({ id: qr.membership_id });
     const membership = memberships[0];
 
-    const planName = membership?.plan_name || 'Tu membresía';
+    const planName = membership?.plan_name || 'Tu membresia';
     const endDate = membership?.end_date || '';
 
     await base44.asServiceRole.integrations.Core.SendEmail({
