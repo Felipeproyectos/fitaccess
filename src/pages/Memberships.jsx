@@ -82,7 +82,10 @@ export default function Memberships() {
                 </span>
               </div>
               <div className="mt-3 space-y-1">
-                <p className="text-sm text-muted-foreground">{plan.duration_days} días</p>
+                {plan.type === "single_pass" || plan.type === "free_pass"
+                  ? <p className="text-sm text-muted-foreground">Se puede utilizar solo una vez</p>
+                  : plan.duration_days ? <p className="text-sm text-muted-foreground">{plan.duration_days} días</p> : null
+                }
                 {plan.max_accesses && <p className="text-sm text-muted-foreground">{plan.max_accesses} accesos</p>}
                 {plan.description && <p className="text-xs text-muted-foreground mt-2">{plan.description}</p>}
               </div>
