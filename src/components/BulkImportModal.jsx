@@ -33,15 +33,17 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
         properties: {
           rows: {
             type: "array",
+            description: "Lista de clientes. Si el archivo solo tiene nombres, igual extrae cada nombre como un elemento. Todos los campos excepto nombre son opcionales.",
             items: {
               type: "object",
               properties: {
-                nombre: { type: "string" },
-                rut: { type: "string" },
-                email: { type: "string" },
-                telefono: { type: "string" },
-                notas: { type: "string" }
-              }
+                nombre: { type: "string", description: "Nombre completo del cliente. Campo requerido." },
+                rut: { type: "string", description: "RUT o documento de identidad. Puede estar vacío." },
+                email: { type: "string", description: "Correo electrónico. Puede estar vacío." },
+                telefono: { type: "string", description: "Número de teléfono. Puede estar vacío." },
+                notas: { type: "string", description: "Notas u observaciones. Puede estar vacío." }
+              },
+              required: ["nombre"]
             }
           }
         }
