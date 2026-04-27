@@ -25,49 +25,53 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
 
   async function processFile(file) {
     setLoading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const res = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
-      json_schema: {
-        type: "object",
-        properties: {
-          rows: {
-            type: "array",
-            description: "Lista de clientes. Si el archivo solo tiene nombres, igual extrae cada nombre como un elemento. Todos los campos excepto nombre son opcionales.",
-            items: {
-              type: "object",
-              properties: {
-                nombre: { type: "string", description: "Nombre completo del cliente. Campo requerido." },
-                rut: { type: "string", description: "RUT o documento de identidad. Puede estar vacío." },
-                email: { type: "string", description: "Correo electrónico. Puede estar vacío." },
-                telefono: { type: "string", description: "Número de teléfono. Puede estar vacío." },
-                notas: { type: "string", description: "Notas u observaciones. Puede estar vacío." }
-              },
-              required: ["nombre"]
-            }
-          }
+
+    // Parse file directly with XLSX
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rawData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    if (rawData.length === 0) {
+      setRows([]); setErrors({}); setLoading(false); setStep("preview");
+      return;
+    }
+
+    // Detect if first row is a header or data
+    const firstRow = rawData[0].map(c => String(c).toLowerCase().trim());
+    const hasHeader = firstRow.some(c =>
+      ["nombre", "name", "rut", "email", "correo", "telefono", "phone"].includes(c)
+    );
+
+    const dataRows = hasHeader ? rawData.slice(1) : rawData;
+    const headers = hasHeader ? firstRow : null;
+
+    const get = (row, ...names) => {
+      if (headers) {
+        for (const n of names) {
+          const idx = headers.findIndex(h => h.includes(n));
+          if (idx !== -1) return String(row[idx] || "").trim();
         }
       }
-    });
+      return "";
+    };
 
-    const parsed = res.output?.rows || (Array.isArray(res.output) ? res.output : []);
-    const normalized = parsed.map(r => {
-      const keys = Object.keys(r);
-      const get = (...names) => {
-        for (const n of names) {
-          const k = keys.find(key => key.toLowerCase().includes(n));
-          if (k) return r[k] || "";
-        }
-        return "";
-      };
+    const normalized = dataRows.map(row => {
+      // If no headers or only one column, treat first column as nombre
+      if (!headers || headers.length === 1) {
+        return {
+          nombre: String(row[0] || "").trim(),
+          rut: "", email: "", telefono: "", notas: ""
+        };
+      }
       return {
-        nombre: get("nombre", "name"),
-        rut: get("rut"),
-        email: get("email", "correo"),
-        telefono: get("tel", "phone", "fono", "numero"),
-        notas: get("nota", "note", "observ")
+        nombre: get(row, "nombre", "name") || String(row[0] || "").trim(),
+        rut: get(row, "rut"),
+        email: get(row, "email", "correo"),
+        telefono: get(row, "tel", "phone", "fono", "numero"),
+        notas: get(row, "nota", "note", "observ")
       };
-    }).filter(r => r.nombre?.trim());
+    }).filter(r => r.nombre);
 
     const existingClients = await base44.entities.Client.list("-created_date", 500);
     const existingEmails = new Set(existingClients.map(c => c.email?.toLowerCase()).filter(Boolean));
