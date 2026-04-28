@@ -75,12 +75,12 @@ export default function Clients() {
     if (paymentFilter) {
       const mem = getClientMembership(c.id);
       const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
-      const hasPayment = payments.some(p => p.client_id === c.id && p.confirmed);
+      const hasPayment = payments.some(p => p.client_id === c.id);
       
       if (paymentFilter === "pending") {
         if (!hasActiveMem || hasPayment) return false;
       } else if (paymentFilter === "paid") {
-        if (!hasPayment) return false;
+        if (!hasActiveMem || !hasPayment) return false;
       }
     }
     
