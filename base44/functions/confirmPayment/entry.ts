@@ -21,11 +21,11 @@ Deno.serve(async (req) => {
     if (!payment) return Response.json({ error: 'Payment not found' }, { status: 404 });
     if (payment.confirmed) return Response.json({ error: 'Payment already confirmed' }, { status: 400 });
 
-    // Fetch client, plan and old QRs in parallel
-    const [clientsArr, plansArr, oldQRs] = await Promise.all([
+    // Fetch client, plan and existing memberships for this plan in parallel
+    const [clientsArr, plansArr, existingMems] = await Promise.all([
       base44.asServiceRole.entities.Client.filter({ id: payment.client_id }),
       base44.asServiceRole.entities.MembershipPlan.filter({ id: payment.plan_id }),
-      base44.asServiceRole.entities.QRCode.filter({ client_id: payment.client_id, active: true })
+      base44.asServiceRole.entities.Membership.filter({ client_id: payment.client_id, plan_id: payment.plan_id })
     ]);
 
     const client = clientsArr[0];
@@ -33,15 +33,19 @@ Deno.serve(async (req) => {
     const plan = plansArr[0];
     if (!plan) return Response.json({ error: 'Plan not found' }, { status: 404 });
 
-    // Invalidate old QRs in parallel
-    await Promise.all(oldQRs.map(qr => base44.asServiceRole.entities.QRCode.update(qr.id, { active: false })));
-
-    // Remove duplicate memberships: same client + same plan + same start_date, keep only the latest
-    const existingMems = await base44.asServiceRole.entities.Membership.filter({ client_id: payment.client_id, plan_id: payment.plan_id });
+    // Remove duplicate memberships: same client + same plan + same start_date
     const startDateStr = payment.start_date || new Date().toISOString().split('T')[0];
     const duplicates = existingMems.filter(m => m.start_date === startDateStr);
+
+    // Invalidate only QRs linked to the duplicate memberships being replaced
     if (duplicates.length > 0) {
-      await Promise.all(duplicates.map(m => base44.asServiceRole.entities.Membership.delete(m.id)));
+      const duplicateIds = new Set(duplicates.map(m => m.id));
+      const linkedQRs = await base44.asServiceRole.entities.QRCode.filter({ client_id: payment.client_id, active: true });
+      const qrsToInvalidate = linkedQRs.filter(qr => duplicateIds.has(qr.membership_id));
+      await Promise.all([
+        ...qrsToInvalidate.map(qr => base44.asServiceRole.entities.QRCode.update(qr.id, { active: false })),
+        ...duplicates.map(m => base44.asServiceRole.entities.Membership.delete(m.id))
+      ]);
     }
 
     const isSinglePass = plan.type === 'single_pass';
