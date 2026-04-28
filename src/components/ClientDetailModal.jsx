@@ -19,7 +19,8 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   const [membershipForm, setMembershipForm] = useState({
     plan_id: "",
     start_date: format(new Date(), "yyyy-MM-dd"),
-    use_date: format(new Date(), "yyyy-MM-dd")
+    use_date: format(new Date(), "yyyy-MM-dd"),
+    payment_method: ""
   });
   const [creatingMembership, setCreatingMembership] = useState(false);
   const [membershipResult, setMembershipResult] = useState(null);
@@ -85,17 +86,20 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       date: format(new Date(), "yyyy-MM-dd"),
       start_date: membershipForm.start_date,
       use_date: membershipForm.use_date,
-      confirmed: false
+      payment_method: membershipForm.payment_method || "",
+      confirmed: membershipForm.payment_method ? true : false
     });
     const res = await base44.functions.invoke("confirmPayment", { payment_id: payment.id });
     setMembershipResult(res.data);
     setCreatingMembership(false);
-    const [mems, qrs] = await Promise.all([
+    const [mems, qrs, pays] = await Promise.all([
       base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
-      base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1)
+      base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
+      base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
     ]);
     setMemberships(mems);
     setQrCodes(qrs);
+    setPayments(pays);
   }
 
   async function saveMembershipEdit() {
@@ -439,6 +443,18 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
             {isSinglePass && (
               <p className="text-xs text-orange-400">⚡ El QR se desactivará tras el primer escaneo</p>
             )}
+            <div>
+              <Label className="text-muted-foreground mb-1.5 block text-xs">Tipo de Pago</Label>
+              <select value={membershipForm.payment_method}
+                onChange={e => setMembershipForm(f => ({ ...f, payment_method: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-card border border-border text-white text-sm">
+                <option value="">— Sin especificar —</option>
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia">🏦 Transferencia</option>
+                <option value="Tarjeta de Débito">💳 Tarjeta de Débito</option>
+                <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
+              </select>
+            </div>
             <div className="flex gap-2">
               <Button variant="secondary" size="sm" onClick={() => setShowNewMembership(false)} className="flex-1">Cancelar</Button>
               <Button size="sm" onClick={createMembershipWithQR}
