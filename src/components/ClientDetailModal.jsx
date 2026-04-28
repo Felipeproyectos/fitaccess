@@ -76,7 +76,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     if (!membershipForm.plan_id) return;
     setCreatingMembership(true);
     setMembershipResult(null);
-    const payment = await base44.entities.Payment.create({
+    const paymentData = {
       client_id: client.id,
       client_name: client.name,
       gym_id: client.gym_id || "default",
@@ -84,11 +84,18 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       plan_name: selectedPlan.name,
       amount: selectedPlan.price,
       date: format(new Date(), "yyyy-MM-dd"),
-      start_date: membershipForm.start_date,
-      use_date: membershipForm.use_date,
       payment_method: membershipForm.payment_method || "Efectivo",
       confirmed: membershipForm.payment_method ? true : false
-    });
+    };
+    
+    if (isFreePass) {
+      paymentData.use_date = membershipForm.use_date;
+      paymentData.start_date = membershipForm.use_date;
+    } else {
+      paymentData.start_date = membershipForm.start_date;
+    }
+    
+    const payment = await base44.entities.Payment.create(paymentData);
     const res = await base44.functions.invoke("confirmPayment", { payment_id: payment.id });
     setMembershipResult(res.data);
     setCreatingMembership(false);
