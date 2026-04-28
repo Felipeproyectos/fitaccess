@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle, CreditCard, Save } from "lucide-react";
+import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle, CreditCard, Save, Trash2 } from "lucide-react";
 import { toTitleCase } from "@/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   const [editingMembership, setEditingMembership] = useState(false);
   const [membershipEdit, setMembershipEdit] = useState({});
   const [savingMembership, setSavingMembership] = useState(false);
+  const [deletingMembership, setDeletingMembership] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -101,6 +102,14 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     setMemberships(mems);
     setEditingMembership(false);
     setSavingMembership(false);
+  }
+
+  async function deleteMembership(membershipId) {
+    setDeletingMembership(membershipId);
+    await base44.entities.Membership.delete(membershipId);
+    const mems = await base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5);
+    setMemberships(mems);
+    setDeletingMembership(null);
   }
 
   const statusColors = {
@@ -347,9 +356,24 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                     <p className="text-sm font-medium text-white">{m.plan_name}</p>
                     <p className="text-xs text-muted-foreground">{m.start_date} → {m.end_date}</p>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[m.status] || "bg-muted text-muted-foreground"}`}>
-                    {{ active: "Activa", expiring: "Por Vencer", expired: "Expirada", pending: "Pendiente" }[m.status] || m.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[m.status] || "bg-muted text-muted-foreground"}`}>
+                      {{ active: "Activa", expiring: "Por Vencer", expired: "Expirada", pending: "Pendiente" }[m.status] || m.status}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                      onClick={() => deleteMembership(m.id)}
+                      disabled={deletingMembership === m.id}
+                    >
+                      {deletingMembership === m.id ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3 h-3" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
