@@ -17,6 +17,7 @@ export default function Clients() {
   const [clients, setClients] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -34,14 +35,16 @@ export default function Clients() {
 
   async function loadClients() {
     setLoading(true);
-    const [data, mems, ps] = await Promise.all([
+    const [data, mems, ps, pays] = await Promise.all([
       base44.entities.Client.list("-created_date", 100),
       base44.entities.Membership.list("-created_date", 500),
-      base44.entities.MembershipPlan.filter({ active: true })
+      base44.entities.MembershipPlan.filter({ active: true }),
+      base44.entities.Payment.filter({ confirmed: true })
     ]);
     setClients(data);
     setMemberships(mems);
     setPlans(ps);
+    setPayments(pays);
     setLoading(false);
   }
 
@@ -94,11 +97,18 @@ export default function Clients() {
   ];
 
   const clientsWithoutMembership = clients.filter(c => c.active !== false && !memberships.some(m => m.client_id === c.id && (m.status === "active" || m.status === "expiring")));
-  // Only flag clients who HAVE an active membership but no payment method
+
+  // Método de pago real: basado en el último pago confirmado del cliente
+  function getClientPaymentMethod(clientId) {
+    const clientPayments = payments.filter(p => p.client_id === clientId).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    return clientPayments[0]?.payment_method || null;
+  }
+
+  // Alerta solo para clientes activos con membresía activa SIN ningún pago confirmado registrado
   const clientsWithoutPayment = clients.filter(c =>
     c.active !== false &&
     memberships.some(m => m.client_id === c.id && (m.status === "active" || m.status === "expiring")) &&
-    (!c.preferred_payment_method || c.preferred_payment_method === "no_especificado")
+    !payments.some(p => p.client_id === c.id)
   );
 
   return (
@@ -268,17 +278,20 @@ export default function Clients() {
                   </div>
                 </div>
                 <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
-                {!isInactive && (!client.preferred_payment_method || client.preferred_payment_method === "no_especificado") && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <AlertTriangle className="w-3 h-3 text-orange-400" />
-                    <span className="text-xs text-orange-400">Sin método de pago</span>
-                  </div>
-                )}
-                {!isInactive && client.preferred_payment_method && client.preferred_payment_method !== "no_especificado" && (
-                  <span className="text-xs text-muted-foreground mt-0.5 block">
-                    {client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}
-                  </span>
-                )}
+                {!isInactive && (() => {
+                  const pm = getClientPaymentMethod(client.id);
+                  if (!pm) return (
+                    <div className="flex items-center gap-1 mt-1">
+                      <AlertTriangle className="w-3 h-3 text-orange-400" />
+                      <span className="text-xs text-orange-400">Sin método de pago</span>
+                    </div>
+                  );
+                  return (
+                    <span className="text-xs text-muted-foreground mt-0.5 block">
+                      {pm === "Efectivo" ? "💵 Efectivo" : pm === "Transferencia" ? "🏦 Transferencia" : pm}
+                    </span>
+                  );
+                })()}
                 {client.email && (
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <Mail className="w-3 h-3 text-muted-foreground" />
@@ -368,13 +381,17 @@ export default function Clients() {
                       )}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      {!isInactive && (!client.preferred_payment_method || client.preferred_payment_method === "no_especificado") ? (
-                        <span className="text-xs text-orange-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Sin método</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : client.preferred_payment_method === "transferencia" ? "🏦 Transferencia" : "—"}
-                        </span>
-                      )}
+                      {(() => {
+                        const pm = getClientPaymentMethod(client.id);
+                        if (!isInactive && !pm) return (
+                          <span className="text-xs text-orange-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Sin método</span>
+                        );
+                        return (
+                          <span className="text-xs text-muted-foreground">
+                            {pm === "Efectivo" ? "💵 Efectivo" : pm === "Transferencia" ? "🏦 Transferencia" : pm || "—"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
