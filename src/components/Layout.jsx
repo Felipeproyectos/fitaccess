@@ -52,10 +52,11 @@ export default function Layout() {
           <Monitor className="w-4 h-4" />
           Pantalla Pública
         </Link>
-        <div className="flex items-center gap-3 px-3 py-2.5">
-          <img src="https://media.base44.com/images/public/69cb2c19dffb908a425f36e6/a580270ca_LogominimalistadeByteSurenblancoynegro.png" alt="ByteSur" className="w-9 h-9 object-contain shrink-0 invert opacity-80" />
-          <div>
-            <p className="text-xs font-semibold text-white leading-tight">BYTE SUR</p>
+        <div className="flex flex-col items-center gap-1 px-3 py-3">
+          <img src="https://media.base44.com/images/public/69cb2c19dffb908a425f36e6/a580270ca_LogominimalistadeByteSurenblancoynegro.png" alt="ByteSur" className="w-16 h-16 object-contain invert opacity-90" />
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground leading-tight">Sistema creado por</p>
+            <p className="text-xs font-bold text-white leading-tight">BYTE SUR</p>
             <p className="text-[10px] text-muted-foreground leading-tight">Soluciones Tecnológicas</p>
           </div>
         </div>
