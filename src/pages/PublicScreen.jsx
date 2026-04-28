@@ -9,7 +9,7 @@ import {
 } from "@/components/PublicScreenDesigns";
 
 const IDLE_TIMEOUT = 5 * 60 * 1000;
-const SCAN_DISPLAY_TIMEOUT = 1500;
+const SCAN_DISPLAY_TIMEOUT = 300;
 
 const DESIGNS = {
   minimal_glow:       { Idle: MinimalGlowIdle,       Result: MinimalGlowResult },
