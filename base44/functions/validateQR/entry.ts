@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const client = clients[0];
     
     if (!qrCode.active) {
-      return Response.json({ status: 'invalid', client_name: client?.name || 'Desconocido', message: 'Sin Membresía Activa' });
+      return Response.json({ status: 'no_membership', client_name: client?.name || 'Desconocido', message: 'Sin Membresía Activa' });
     }
 
     const memberships = await base44.asServiceRole.entities.Membership.filter({ id: qrCode.membership_id });
