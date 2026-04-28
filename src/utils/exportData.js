@@ -172,7 +172,7 @@ function drawFooter(doc, PW, PH, ML, MR, gymData) {
   doc.text(`Pág. ${doc.internal.getCurrentPageInfo().pageNumber}`, PW - MR, PH - 7.5, { align: "right" });
   doc.setFontSize(6);
   doc.setTextColor(...C.mutedText);
-  doc.text("Sistema creado por Soluciones FML", PW / 2, PH - 3, { align: "center" });
+  doc.text("Sistema creado por BYTE SUR Soluciones Tecnológicas  ·  +56982645747  ·  www.bytesur.cl", PW / 2, PH - 3, { align: "center" });
 }
 
 function drawPageHeader(doc, PW, ML, MR, contentW, gymData, title, headers, rowH, colW) {

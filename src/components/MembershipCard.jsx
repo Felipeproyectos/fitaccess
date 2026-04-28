@@ -100,6 +100,13 @@ export default function MembershipCard({ client, membership, qrToken, gymLogo, g
             </p>
           </div>
 
+          {/* Footer firma */}
+          <div style={{ width: "100%", height: "1px", background: "#2a2a2a" }} />
+          <div style={{ textAlign: "center" }}>
+            <p style={{ color: "#444444", fontSize: "9px", margin: 0 }}>Sistema creado por BYTE SUR Soluciones Tecnológicas</p>
+            <p style={{ color: "#444444", fontSize: "9px", margin: "2px 0 0 0" }}>+56982645747  ·  www.bytesur.cl</p>
+          </div>
+
           {/* Dates */}
           <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
             {membership?.start_date && (
