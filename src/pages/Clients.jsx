@@ -268,10 +268,12 @@ export default function Clients() {
                  </div>
                 <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
                 {!isInactive && hasActiveMem && (() => {
-                  const hasPayment = payments.some(p => p.client_id === client.id && p.confirmed);
+                  const clientPays = payments.filter(p => p.client_id === client.id && p.confirmed);
+                  const latestPay = clientPays.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
+                  const hasPayment = !!latestPay;
                   return (
                     <span className={`text-xs mt-0.5 block ${hasPayment ? 'text-green-400' : 'text-orange-400'}`}>
-                      {hasPayment ? '✓ Pagado' : '⚠ Pendiente'}
+                      {hasPayment ? `✓ ${latestPay.payment_method || 'Pagado'}` : '⚠ Pendiente'}
                     </span>
                   );
                 })()}
@@ -369,11 +371,12 @@ export default function Clients() {
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {(() => {
-                        const hasPayment = payments.some(p => p.client_id === client.id && p.confirmed);
+                        const clientPays = payments.filter(p => p.client_id === client.id && p.confirmed);
+                        const latestPay = clientPays.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
                         if (isInactive || !mem) return <span className="text-xs text-muted-foreground">—</span>;
                         return (
-                          <span className={`text-xs ${hasPayment ? 'text-green-400' : 'text-orange-400'}`}>
-                            {hasPayment ? '✓ Pagado' : '⚠ Pendiente'}
+                          <span className={`text-xs ${latestPay ? 'text-green-400' : 'text-orange-400'}`}>
+                            {latestPay ? `✓ ${latestPay.payment_method || 'Pagado'}` : '⚠ Pendiente'}
                           </span>
                         );
                       })()}

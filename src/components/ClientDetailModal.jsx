@@ -133,8 +133,11 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     delete membershipUpdateData.payment_status;
     await base44.entities.Membership.update(activeMembership.id, membershipUpdateData);
 
-    // Actualizar el pago si se cambió algo relacionado
-    const existingPayment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+    // Actualizar el pago más reciente del cliente
+    const clientPaymentsSorted = payments
+      .filter(p => p.client_id === client.id)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const existingPayment = clientPaymentsSorted.find(p => p.confirmed) || clientPaymentsSorted[0];
     if (existingPayment) {
       const paymentUpdateData = {};
       if (membershipEdit.payment_method && membershipEdit.payment_method !== existingPayment.payment_method) {
@@ -233,7 +236,10 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Membresía Activa</p>
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground hover:text-white gap-1"
                 onClick={() => {
-                  const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+                  const clientPayments = payments
+                    .filter(p => p.client_id === client.id)
+                    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+                  const payment = clientPayments.find(p => p.confirmed) || clientPayments[0];
                   setMembershipEdit({
                     plan_name: activeMembership.plan_name,
                     plan_id: activeMembership.plan_id,
@@ -262,19 +268,27 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               )}
             </div>
             {(() => {
-              const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
-              const hasPayment = payment?.confirmed;
+              const clientPayments = payments
+                .filter(p => p.client_id === client.id)
+                .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+              const confirmedPayment = clientPayments.find(p => p.confirmed);
+              const latestPayment = clientPayments[0];
+              const hasPayment = !!confirmedPayment;
+              const displayPayment = confirmedPayment || latestPayment;
               return (
                 <div className={`flex items-center gap-2 text-xs font-medium px-2.5 py-1.5 rounded-lg ${hasPayment ? 'bg-green-400/20 text-green-400' : 'bg-orange-400/20 text-orange-400'}`}>
                   <span>{hasPayment ? '✓' : '⚠'}</span>
                   <span>Estado de Pago: {hasPayment ? 'Pagado' : 'Pendiente'}</span>
-                  {payment?.payment_method && <span className="ml-auto text-muted-foreground">({payment.payment_method})</span>}
+                  {displayPayment?.payment_method && <span className="ml-auto text-muted-foreground">({displayPayment.payment_method})</span>}
                 </div>
               );
             })()}
             {/* Quick payment method selector */}
             {(() => {
-              const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+              const clientPayments = payments
+                .filter(p => p.client_id === client.id)
+                .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+              const latestPayment = clientPayments[0];
               return (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">Cambiar tipo de pago:</p>
@@ -288,21 +302,15 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                       <Button
                         key={method.value}
                         size="sm"
-                        variant={payment?.payment_method === method.value ? "default" : "outline"}
-                        className={`text-xs h-8 ${payment?.payment_method === method.value ? 'bg-primary hover:bg-primary/90' : ''}`}
+                        variant={latestPayment?.payment_method === method.value ? "default" : "outline"}
+                        className={`text-xs h-8 ${latestPayment?.payment_method === method.value ? 'bg-primary hover:bg-primary/90' : ''}`}
                         onClick={async () => {
-                          if (payment) {
-                            await base44.entities.Payment.update(payment.id, { 
+                          if (latestPayment) {
+                            await base44.entities.Payment.update(latestPayment.id, { 
                               payment_method: method.value,
                               confirmed: true 
                             });
-                            const [mems, qrs, pays] = await Promise.all([
-                              base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
-                              base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
-                              base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
-                            ]);
-                            setMemberships(mems);
-                            setQrCodes(qrs);
+                            const pays = await base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50);
                             setPayments(pays);
                           }
                         }}

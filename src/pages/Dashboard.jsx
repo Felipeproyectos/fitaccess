@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ todayAttendance: 0, activeClients: 0, expiringClients: 0, pendingPayments: 0 });
-  const [financial, setFinancial] = useState({ monthIncome: 0, totalCollected: 0, pendingAmount: 0 });
+  const [financial, setFinancial] = useState({ monthIncome: 0, totalCollected: 0, pendingAmount: 0, byMethod: {} });
   const [recentAttendance, setRecentAttendance] = useState([]);
   const [expiringClients, setExpiringClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,10 +66,18 @@ export default function Dashboard() {
       expiringClients: expiring.length,
       pendingPayments: pendingPayments.length
     });
+    // Desglose por método de pago (solo confirmados del mes)
+    const byMethod = {};
+    monthPayments.forEach(p => {
+      const method = p.payment_method || "Sin especificar";
+      byMethod[method] = (byMethod[method] || 0) + (p.amount || 0);
+    });
+
     setFinancial({
       monthIncome: monthPayments.reduce((s, p) => s + (p.amount || 0), 0),
       totalCollected: confirmedPayments.reduce((s, p) => s + (p.amount || 0), 0),
-      pendingAmount: pendingPayments.reduce((s, p) => s + (p.amount || 0), 0)
+      pendingAmount: pendingPayments.reduce((s, p) => s + (p.amount || 0), 0),
+      byMethod
     });
     setRecentAttendance(attendances.slice(0, 5));
     setExpiringClients(expiringEnriched.slice(0, 8));
@@ -102,19 +110,38 @@ export default function Dashboard() {
 
       {/* Financial summary */}
       {!loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-card border border-border rounded-xl p-5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ingresos del Mes</p>
-            <p className="text-2xl font-bold text-green-400">${financial.monthIncome.toLocaleString('es-CL')}</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ingresos del Mes</p>
+              <p className="text-2xl font-bold text-green-400">${financial.monthIncome.toLocaleString('es-CL')}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Recaudado</p>
+              <p className="text-2xl font-bold text-white">${financial.totalCollected.toLocaleString('es-CL')}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Pendiente de Cobro</p>
+              <p className="text-2xl font-bold text-orange-400">${financial.pendingAmount.toLocaleString('es-CL')}</p>
+            </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Recaudado</p>
-            <p className="text-2xl font-bold text-white">${financial.totalCollected.toLocaleString('es-CL')}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Pendiente de Cobro</p>
-            <p className="text-2xl font-bold text-orange-400">${financial.pendingAmount.toLocaleString('es-CL')}</p>
-          </div>
+          {Object.keys(financial.byMethod).length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                <DollarSign className="w-3.5 h-3.5" /> Ingresos del Mes por Método de Pago
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Object.entries(financial.byMethod).sort((a, b) => b[1] - a[1]).map(([method, amount]) => (
+                  <div key={method} className="bg-background rounded-lg p-3 border border-border">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {method === "Efectivo" ? "💵" : method === "Transferencia" ? "🏦" : method.includes("Débito") ? "💳" : method.includes("Crédito") ? "💳" : "📋"} {method}
+                    </p>
+                    <p className="text-lg font-bold text-white">${amount.toLocaleString('es-CL')}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
