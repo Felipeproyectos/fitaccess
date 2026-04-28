@@ -122,7 +122,9 @@ export default function Memberships() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {plan.type === "single_pass" || plan.type === "free_pass" ? "Pase único" : plan.duration_days ? `${plan.duration_days} días` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{plan.max_accesses ?? "Ilimitado"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {plan.type === "single_pass" || plan.type === "free_pass" ? "1 (único)" : plan.max_accesses ?? "Ilimitado"}
+                    </td>
                     <td className="px-4 py-3 text-white font-bold">${plan.price?.toLocaleString('es-CL')}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">

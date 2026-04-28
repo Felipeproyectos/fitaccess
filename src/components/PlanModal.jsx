@@ -33,8 +33,13 @@ export default function PlanModal({ plan, onClose, onSaved }) {
     if (!form.name.trim() || !form.price) return;
     setSaving(true);
     const data = { ...form, price: Number(form.price), duration_days: Number(form.duration_days) };
-    if (form.max_accesses) data.max_accesses = Number(form.max_accesses);
-    else delete data.max_accesses;
+    if (form.type === 'single_pass' || form.type === 'free_pass') {
+      data.max_accesses = 1;
+    } else if (form.max_accesses) {
+      data.max_accesses = Number(form.max_accesses);
+    } else {
+      delete data.max_accesses;
+    }
     if (plan?.id) await base44.entities.MembershipPlan.update(plan.id, data);
     else await base44.entities.MembershipPlan.create(data);
     setSaving(false);
