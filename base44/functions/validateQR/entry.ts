@@ -1,20 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const recentScans = new Map();
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const { token } = await req.json();
     if (!token) return Response.json({ status: 'invalid', message: 'Token requerido' });
 
-    // Anti double-scan (10 seconds)
     const now = Date.now();
-    if (recentScans.has(token)) {
-      if (now - recentScans.get(token) < 10000) {
-        return Response.json({ status: 'invalid', message: 'Escaneo duplicado, espera unos segundos' });
-      }
-    }
 
     // Find QR linked to membership
     const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ token });
@@ -22,11 +14,19 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'invalid', client_name: 'Desconocido', message: 'Código QR inválido' });
     }
     const qrCode = qrCodes[0];
-    
+
+    // Anti double-scan: reject if the same QR was processed less than 10 seconds ago
+    if (qrCode.updated_date) {
+      const lastScan = new Date(qrCode.updated_date).getTime();
+      if (!isNaN(lastScan) && now - lastScan < 10000) {
+        return Response.json({ status: 'invalid', message: 'Escaneo duplicado, espera unos segundos' });
+      }
+    }
+
     // Obtener cliente para mostrar nombre si QR está inactivo
     const clients = await base44.asServiceRole.entities.Client.filter({ id: qrCode.client_id });
     const client = clients[0];
-    
+
     if (!qrCode.active) {
       return Response.json({ status: 'no_membership', client_name: client?.name || 'Desconocido', message: 'Sin Membresía Activa' });
     }
@@ -70,8 +70,6 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.QRCode.update(qrCode.id, { active: false });
       await base44.asServiceRole.entities.Membership.update(membership.id, { status: 'expired', remaining_accesses: 0 });
       await recordAttendance(base44, client, membership, 'success', 0);
-      recentScans.set(token, now);
-      setTimeout(() => recentScans.delete(token), 10000);
       return Response.json({ status: 'success', client_name: client.name, message: '⚡ Pase único usado — acceso permitido' });
     }
 
@@ -111,9 +109,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    recentScans.set(token, now);
-    setTimeout(() => recentScans.delete(token), 10000);
-    await recordAttendance(base44, client, membership, scanResult, remainingAccesses);
+    await Promise.all([
+      recordAttendance(base44, client, membership, scanResult, remainingAccesses),
+      base44.asServiceRole.entities.QRCode.update(qrCode.id, { active: true }),
+    ]);
 
     return Response.json({
       status: scanResult,
