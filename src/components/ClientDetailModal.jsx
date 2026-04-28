@@ -95,7 +95,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
         amount: selectedPlan.price,
         date: format(new Date(), "yyyy-MM-dd"),
         payment_method: membershipForm.payment_method || "Efectivo",
-        confirmed: membershipForm.payment_method ? true : false
+        confirmed: false
       };
       
       if (planIsFreePass) {
