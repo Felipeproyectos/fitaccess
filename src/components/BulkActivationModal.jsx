@@ -206,7 +206,7 @@ export default function BulkActivationModal({ onClose }) {
                 {endDate && <p className="text-white"><span className="text-muted-foreground">Fin:</span> {endDate}</p>}
                 <p className="text-white"><span className="text-muted-foreground">Precio por cliente:</span> ${parseFloat(price || 0).toLocaleString()}</p>
               </div>
-              <p className="text-xs text-muted-foreground">Se generará un QR y se enviará un email de activación a cada cliente con email registrado.</p>
+
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setStep(3)} className="flex-1" disabled={processing}>← Atrás</Button>
                 <Button onClick={confirmActivation} disabled={processing} className="flex-1 bg-primary hover:bg-primary/90 gap-2">

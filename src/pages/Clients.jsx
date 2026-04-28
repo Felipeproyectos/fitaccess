@@ -331,7 +331,7 @@ export default function Clients() {
         />
       )}
       {showBulkActivation && (
-        <BulkActivationModal onClose={() => setShowBulkActivation(false)} />
+        <BulkActivationModal onClose={() => { setShowBulkActivation(false); loadClients(); }} />
       )}
       {showBulkPayment && (
         <BulkPaymentMethodModal
