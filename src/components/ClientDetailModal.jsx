@@ -100,18 +100,25 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
 
   async function saveMembershipEdit() {
     setSavingMembership(true);
-    await base44.entities.Membership.update(activeMembership.id, membershipEdit);
+    
+    // Actualizar membresía
+    const membershipUpdateData = { ...membershipEdit };
+    delete membershipUpdateData.payment_method;
+    delete membershipUpdateData.payment_status;
+    await base44.entities.Membership.update(activeMembership.id, membershipUpdateData);
 
-    // Actualizar o crear el pago si se cambió el tipo de pago o estado
-    if (membershipEdit.payment_method || membershipEdit.payment_status !== undefined) {
-      const existingPayment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
-      if (existingPayment) {
-        const updateData = {};
-        if (membershipEdit.payment_method) updateData.payment_method = membershipEdit.payment_method;
-        if (membershipEdit.payment_status !== undefined) updateData.confirmed = membershipEdit.payment_status === 'paid';
-        if (Object.keys(updateData).length > 0) {
-          await base44.entities.Payment.update(existingPayment.id, updateData);
-        }
+    // Actualizar el pago si se cambió algo relacionado
+    const existingPayment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+    if (existingPayment) {
+      const paymentUpdateData = {};
+      if (membershipEdit.payment_method && membershipEdit.payment_method !== existingPayment.payment_method) {
+        paymentUpdateData.payment_method = membershipEdit.payment_method;
+      }
+      if (membershipEdit.payment_status !== undefined) {
+        paymentUpdateData.confirmed = membershipEdit.payment_status === 'paid';
+      }
+      if (Object.keys(paymentUpdateData).length > 0) {
+        await base44.entities.Payment.update(existingPayment.id, paymentUpdateData);
       }
     }
 
@@ -259,7 +266,10 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                         className={`text-xs h-8 ${payment?.payment_method === method.value ? 'bg-primary hover:bg-primary/90' : ''}`}
                         onClick={async () => {
                           if (payment) {
-                            await base44.entities.Payment.update(payment.id, { payment_method: method.value });
+                            await base44.entities.Payment.update(payment.id, { 
+                              payment_method: method.value,
+                              confirmed: true 
+                            });
                             const [mems, qrs, pays] = await Promise.all([
                               base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
                               base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
