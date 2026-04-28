@@ -22,17 +22,26 @@ export default function Dashboard() {
     setLoading(true);
     const today = format(new Date(), "yyyy-MM-dd");
     const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
-    const [attendances, memberships, allPayments] = await Promise.all([
+    const [attendances, memberships, allPayments, allClients] = await Promise.all([
       base44.entities.Attendance.filter({ date: today }, "-created_date", 5),
       base44.entities.Membership.list("-created_date", 200),
-      base44.entities.Payment.list("-created_date", 500)
+      base44.entities.Payment.list("-created_date", 500),
+      base44.entities.Client.list("-created_date", 500)
     ]);
 
+    const clientMap = Object.fromEntries(allClients.map(c => [c.id, c]));
+
     const activeMemberships = memberships.filter(m => m.status === "active" || m.status === "expiring");
-    const expiring = memberships.filter(m => m.status === "expiring" || (m.remaining_accesses !== undefined && m.remaining_accesses <= 3 && m.remaining_accesses >= 0));
+    const expiring = memberships.filter(m => m.status === "expiring");
     const pendingPayments = allPayments.filter(p => !p.confirmed);
     const confirmedPayments = allPayments.filter(p => p.confirmed);
     const monthPayments = confirmedPayments.filter(p => p.date >= monthStart);
+
+    // Enrich expiring memberships with client name
+    const expiringEnriched = expiring.map(m => ({
+      ...m,
+      client_name: clientMap[m.client_id]?.name || "Cliente desconocido"
+    }));
 
     setStats({
       todayAttendance: attendances.length,
@@ -46,7 +55,7 @@ export default function Dashboard() {
       pendingAmount: pendingPayments.reduce((s, p) => s + (p.amount || 0), 0)
     });
     setRecentAttendance(attendances.slice(0, 5));
-    setExpiringClients(expiring.slice(0, 5));
+    setExpiringClients(expiringEnriched.slice(0, 8));
     setLoading(false);
   }
 
@@ -151,14 +160,17 @@ export default function Dashboard() {
               {expiringClients.map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-white">{m.plan_name}</p>
-                    <p className="text-xs text-muted-foreground">Vence: {m.end_date}</p>
+                    <p className="text-sm font-medium text-white">{toTitleCase(m.client_name)}</p>
+                    <p className="text-xs text-muted-foreground">{m.plan_name} · Vence: {m.end_date}</p>
                   </div>
-                  {m.remaining_accesses !== undefined && (
+                  <div className="flex flex-col items-end gap-1">
                     <span className="text-xs px-2 py-1 rounded-full bg-orange-400/20 text-orange-400 font-medium">
-                      {m.remaining_accesses} accesos
+                      ⚠️ Por vencer
                     </span>
-                  )}
+                    {m.remaining_accesses !== undefined && m.remaining_accesses !== null && (
+                      <span className="text-xs text-muted-foreground">{m.remaining_accesses} accesos</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
