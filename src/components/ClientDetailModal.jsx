@@ -115,12 +115,18 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       }
     }
 
-    const [mems, pays] = await Promise.all([
-      base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
+    const [mems, qrs, ps, gyms, pays] = await Promise.all([
+      base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
+      base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
+      base44.entities.MembershipPlan.filter({ active: true }),
+      base44.entities.Gym.list("-created_date", 1),
       base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
     ]);
     setMemberships(mems);
+    setQrCodes(qrs);
+    setPlans(ps);
     setPayments(pays);
+    if (gyms.length > 0) setGym(gyms[0]);
     setEditingMembership(false);
     setSavingMembership(false);
   }
@@ -223,11 +229,52 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               )}
             </div>
             {(() => {
-              const hasPayment = payments.some(p => p.confirmed && p.plan_id === activeMembership.plan_id);
+              const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+              const hasPayment = payment?.confirmed;
               return (
                 <div className={`flex items-center gap-2 text-xs font-medium px-2.5 py-1.5 rounded-lg ${hasPayment ? 'bg-green-400/20 text-green-400' : 'bg-orange-400/20 text-orange-400'}`}>
                   <span>{hasPayment ? '✓' : '⚠'}</span>
                   <span>Estado de Pago: {hasPayment ? 'Pagado' : 'Pendiente'}</span>
+                  {payment?.payment_method && <span className="ml-auto text-muted-foreground">({payment.payment_method})</span>}
+                </div>
+              );
+            })()}
+            {/* Quick payment method selector */}
+            {(() => {
+              const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+              return (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Cambiar tipo de pago:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: "Efectivo", label: "💵 Efectivo" },
+                      { value: "Transferencia", label: "🏦 Transferencia" },
+                      { value: "Tarjeta de Débito", label: "💳 Débito" },
+                      { value: "Tarjeta de Crédito", label: "💳 Crédito" }
+                    ].map(method => (
+                      <Button
+                        key={method.value}
+                        size="sm"
+                        variant={payment?.payment_method === method.value ? "default" : "outline"}
+                        className={`text-xs h-8 ${payment?.payment_method === method.value ? 'bg-primary hover:bg-primary/90' : ''}`}
+                        onClick={async () => {
+                          if (payment) {
+                            await base44.entities.Payment.update(payment.id, { payment_method: method.value });
+                            const [mems, qrs, pays] = await Promise.all([
+                              base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
+                              base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
+                              base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
+                            ]);
+                            setMemberships(mems);
+                            setQrCodes(qrs);
+                            setPayments(pays);
+                          }
+                        }}
+                      >
+                        {method.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               );
             })()}
