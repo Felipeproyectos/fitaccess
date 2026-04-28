@@ -16,12 +16,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Find active QR
-    const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ token, active: true });
+    // Find QR linked to membership
+    const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ token });
     if (!qrCodes.length) {
-      return Response.json({ status: 'invalid', message: 'Código QR inválido o ya utilizado' });
+      return Response.json({ status: 'invalid', message: 'Código QR inválido' });
     }
     const qrCode = qrCodes[0];
+    if (!qrCode.active) {
+      return Response.json({ status: 'invalid', message: 'Código QR ya utilizado o expirado' });
+    }
 
     const memberships = await base44.asServiceRole.entities.Membership.filter({ id: qrCode.membership_id });
     const membership = memberships[0];
