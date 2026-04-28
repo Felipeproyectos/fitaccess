@@ -46,6 +46,12 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'expired', client_name: client.name, message: 'Sin membresía activa' });
     }
 
+    // Check if already attended today
+    const todayAttendances = await base44.asServiceRole.entities.Attendance.filter({ client_id: client.id, date: today });
+    if (todayAttendances.length > 0) {
+      return Response.json({ status: 'already_registered', client_name: client.name, message: 'Ya registraste tu asistencia hoy. ¡Nos vemos mañana!' });
+    }
+
     // Check expiry
     if (activeMembership.end_date && activeMembership.end_date < today) {
       await base44.asServiceRole.entities.Membership.update(activeMembership.id, { status: 'expired' });
