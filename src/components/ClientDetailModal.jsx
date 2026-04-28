@@ -99,9 +99,9 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     
     if (planIsFreePass) {
       paymentData.use_date = membershipForm.use_date;
-      paymentData.start_date = membershipForm.use_date;
+      paymentData.start_date = membershipForm.use_date || format(new Date(), "yyyy-MM-dd");
     } else {
-      paymentData.start_date = startDate;
+      paymentData.start_date = startDate || format(new Date(), "yyyy-MM-dd");
     }
     
     const payment = await base44.entities.Payment.create(paymentData);
