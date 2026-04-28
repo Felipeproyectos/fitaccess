@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2, AlertTriangle, UserX, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import BulkImportModal from "@/components/BulkImportModal";
-import BulkActivationModal from "@/components/BulkActivationModal";
-import BulkPaymentMethodModal from "@/components/BulkPaymentMethodModal";
 import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +22,6 @@ export default function Clients() {
   const [editClient, setEditClient] = useState(null);
   const [viewClient, setViewClient] = useState(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
-  const [showBulkActivation, setShowBulkActivation] = useState(false);
-  const [showBulkPayment, setShowBulkPayment] = useState(false);
   const [tab, setTab] = useState("active");
   const [deletingId, setDeletingId] = useState(null);
   const [membershipFilter, setMembershipFilter] = useState("");
@@ -114,85 +110,21 @@ export default function Clients() {
   return (
     <div className="p-6 space-y-6">
 
-      {/* Alerta clientes sin membresía activa */}
-      {!loading && clientsWithoutMembership.length > 0 && (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-red-500/60 bg-gradient-to-r from-red-500/20 via-red-600/10 to-red-500/20 p-5 shadow-lg shadow-red-500/10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,59,59,0.15),transparent_60%)]" />
-          <div className="relative flex items-start gap-4">
-            <div className="shrink-0 w-11 h-11 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center">
-              <UserX className="w-5 h-5 text-red-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-bold text-red-400 leading-tight">
-                {clientsWithoutMembership.length} cliente{clientsWithoutMembership.length !== 1 ? "s" : ""} sin membresía activa
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Estos clientes no tienen ninguna membresía vigente o su membresía está vencida.
-              </p>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {clientsWithoutMembership.slice(0, 6).map(c => (
-                  <span key={c.id} className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300">
-                    {toTitleCase(c.name)}
-                  </span>
-                ))}
-                {clientsWithoutMembership.length > 6 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300">
-                    +{clientsWithoutMembership.length - 6} más
-                  </span>
-                )}
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowBulkActivation(true)}
-              className="shrink-0 bg-red-500 hover:bg-red-600 text-white text-xs"
-            >
-              🚀 Activar
-            </Button>
-          </div>
-        </div>
-      )}
 
-      {/* Alerta clientes sin método de pago */}
-      {clientsWithoutPayment.length > 0 && (
-        <div className="flex items-start gap-3 bg-orange-400/10 border border-orange-400/30 rounded-xl p-4">
-          <AlertTriangle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-orange-400">
-              {clientsWithoutPayment.length} cliente{clientsWithoutPayment.length !== 1 ? "s" : ""} sin método de pago especificado
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Edita cada cliente para asignar "Efectivo" o "Transferencia" como método de pago preferido.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowBulkPayment(true)}
-            className="text-xs text-orange-400 underline shrink-0 hover:text-orange-300"
-          >
-            Asignar masivo
-          </button>
-        </div>
-      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Clientes</h1>
           <p className="text-muted-foreground mt-1">{clients.length} clientes registrados</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <ExportMenu options={exportOptions} />
-          <Button variant="outline" onClick={() => setShowBulkActivation(true)} className="gap-2">
-            🚀 Activación Masiva
-          </Button>
-          <Button variant="outline" onClick={() => setShowBulkPayment(true)} className="gap-2">
-            💳 Pago Masivo
-          </Button>
-          <Button variant="outline" onClick={() => setShowBulkImport(true)} className="gap-2">
-            📥 Carga Masiva
-          </Button>
-          <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
-            <Plus className="w-4 h-4" /> Nuevo Cliente
-          </Button>
-        </div>
+           <ExportMenu options={exportOptions} />
+           <Button variant="outline" onClick={() => setShowBulkImport(true)} className="gap-2">
+             📥 Carga Masiva
+           </Button>
+           <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
+             <Plus className="w-4 h-4" /> Nuevo Cliente
+           </Button>
+         </div>
       </div>
 
       {/* Tabs */}
@@ -443,15 +375,6 @@ export default function Clients() {
           gymId="default"
           onClose={() => setShowBulkImport(false)}
           onImported={() => { setShowBulkImport(false); loadClients(); }}
-        />
-      )}
-      {showBulkActivation && (
-        <BulkActivationModal onClose={() => { setShowBulkActivation(false); loadClients(); }} />
-      )}
-      {showBulkPayment && (
-        <BulkPaymentMethodModal
-          onClose={() => setShowBulkPayment(false)}
-          onSaved={() => { setShowBulkPayment(false); loadClients(); }}
         />
       )}
     </div>

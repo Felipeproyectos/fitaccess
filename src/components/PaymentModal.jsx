@@ -14,7 +14,7 @@ export default function PaymentModal({ onClose, onSaved }) {
     date: format(new Date(), "yyyy-MM-dd"),
     start_date: format(new Date(), "yyyy-MM-dd"),
     use_date: format(new Date(), "yyyy-MM-dd"),
-    payment_method: "Efectivo",
+    payment_method: "",
     notes: ""
   });
   const [saving, setSaving] = useState(false);
@@ -44,7 +44,7 @@ export default function PaymentModal({ onClose, onSaved }) {
   }
 
   async function save() {
-    if (!form.client_id || !form.plan_id || !form.amount) return;
+    if (!form.client_id || !form.plan_id || !form.amount || !form.payment_method) return;
     setSaving(true);
     const client = clients.find(c => c.id === form.client_id);
     const plan = plans.find(p => p.id === form.plan_id);
@@ -118,9 +118,10 @@ export default function PaymentModal({ onClose, onSaved }) {
             </div>
           )}
           <div>
-            <Label className="text-muted-foreground mb-1.5 block">Método de Pago</Label>
+            <Label className="text-muted-foreground mb-1.5 block">Método de Pago *</Label>
             <select value={form.payment_method} onChange={e => set("payment_method", e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white text-sm">
+              <option value="">Seleccionar método...</option>
               {["Efectivo","Transferencia","Tarjeta de Débito","Tarjeta de Crédito"].map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -134,7 +135,7 @@ export default function PaymentModal({ onClose, onSaved }) {
         </div>
         <div className="flex gap-3 pt-2">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={save} disabled={saving || !form.client_id || !form.plan_id || !form.amount}
+          <Button onClick={save} disabled={saving || !form.client_id || !form.plan_id || !form.amount || !form.payment_method}
             className="flex-1 bg-primary hover:bg-primary/90 glow-red text-white">
             {saving ? "Guardando..." : "Registrar"}
           </Button>
