@@ -10,21 +10,12 @@ import { Input } from "@/components/ui/input";
 import ClientModal from "@/components/ClientModal";
 import ClientDetailModal from "@/components/ClientDetailModal";
 
-const MEMBERSHIP_TYPES = [
-  { value: "", label: "Todos los tipos" },
-  { value: "unlimited", label: "Ilimitado" },
-  { value: "limited", label: "Limitado" },
-  { value: "weekly", label: "Semanal" },
-  { value: "monthly", label: "Mensual" },
-  { value: "custom", label: "Personalizado" },
-  { value: "free_pass", label: "Pase Libre" },
-  { value: "single_pass", label: "Pase Único" },
-  { value: "none", label: "Sin membresía" },
-];
+
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
   const [memberships, setMemberships] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -40,12 +31,14 @@ export default function Clients() {
 
   async function loadClients() {
     setLoading(true);
-    const [data, mems] = await Promise.all([
+    const [data, mems, ps] = await Promise.all([
       base44.entities.Client.list("-created_date", 100),
-      base44.entities.Membership.list("-created_date", 500)
+      base44.entities.Membership.list("-created_date", 500),
+      base44.entities.MembershipPlan.filter({ active: true })
     ]);
     setClients(data);
     setMemberships(mems);
+    setPlans(ps);
     setLoading(false);
   }
 
@@ -67,7 +60,7 @@ export default function Clients() {
     if (!membershipFilter) return true;
     const mem = getClientMembership(c.id);
     if (membershipFilter === "none") return !mem;
-    return mem?.type === membershipFilter;
+    return mem?.plan_name?.toLowerCase() === membershipFilter.toLowerCase();
   });
 
   function openEdit(client) { setEditClient(client); setShowModal(true); }
@@ -149,9 +142,11 @@ export default function Clients() {
           onChange={e => setMembershipFilter(e.target.value)}
           className="px-3 py-2 rounded-lg bg-card border border-border text-sm text-white"
         >
-          {MEMBERSHIP_TYPES.map(t => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+          <option value="">Todas las membresías</option>
+          {plans.map(p => (
+            <option key={p.id} value={p.name}>{p.name}</option>
           ))}
+          <option value="none">Sin membresía</option>
         </select>
       </div>
 
