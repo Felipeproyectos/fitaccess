@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle } from "lucide-react";
+import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle, CreditCard } from "lucide-react";
 import { toTitleCase } from "@/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import MembershipCard from "@/components/MembershipCard";
 
 export default function ClientDetailModal({ client, onClose, onEdit }) {
   const [memberships, setMemberships] = useState([]);
@@ -21,28 +22,21 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   });
   const [creatingMembership, setCreatingMembership] = useState(false);
   const [membershipResult, setMembershipResult] = useState(null);
-  const [resending, setResending] = useState(false);
-  const [resendMsg, setResendMsg] = useState(null);
-
-  async function resendQR() {
-    setResending(true);
-    setResendMsg(null);
-    const res = await base44.functions.invoke('resendQR', { client_id: client.id });
-    setResending(false);
-    setResendMsg(res.data?.success ? { ok: true, text: `QR enviado a ${res.data.email}` } : { ok: false, text: res.data?.error || 'Error al enviar' });
-    setTimeout(() => setResendMsg(null), 4000);
-  }
+  const [showCard, setShowCard] = useState(false);
+  const [gym, setGym] = useState(null);
 
   useEffect(() => {
     async function load() {
-      const [mems, qrs, ps] = await Promise.all([
+      const [mems, qrs, ps, gyms] = await Promise.all([
         base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
         base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
-        base44.entities.MembershipPlan.filter({ active: true })
+        base44.entities.MembershipPlan.filter({ active: true }),
+        base44.entities.Gym.list("-created_date", 1)
       ]);
       setMemberships(mems);
       setQrCodes(qrs);
       setPlans(ps);
+      if (gyms.length > 0) setGym(gyms[0]);
       setLoading(false);
     }
     load();
@@ -156,12 +150,11 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               bgColor="#ffffff"
             />
             <p className="text-xs text-gray-400 font-mono">{qrCodes[0].token?.slice(0, 20)}...</p>
-            <button onClick={resendQR} disabled={resending}
-              className="text-xs text-primary underline disabled:opacity-50">
-              {resending ? 'Enviando...' : '📧 Reenviar QR por email'}
-            </button>
-            {resendMsg && (
-              <p className={`text-xs font-medium ${resendMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{resendMsg.text}</p>
+            {activeMembership && (
+              <button onClick={() => setShowCard(true)}
+                className="flex items-center gap-1.5 text-xs text-primary underline">
+                <CreditCard className="w-3 h-3" /> Descargar tarjeta de acceso
+              </button>
             )}
           </div>
         )}
@@ -240,6 +233,17 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
         )}
 
         {loading && <div className="h-12 bg-muted animate-pulse rounded-xl" />}
+
+      {showCard && qrCodes[0]?.token && (
+        <MembershipCard
+          client={client}
+          membership={activeMembership}
+          qrToken={qrCodes[0].token}
+          gymLogo={gym?.logo_url}
+          gymName={gym?.name}
+          onClose={() => setShowCard(false)}
+        />
+      )}
 
         {!loading && memberships.length > 0 && (
           <div>

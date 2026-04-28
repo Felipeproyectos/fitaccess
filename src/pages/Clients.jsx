@@ -10,6 +10,18 @@ import { Input } from "@/components/ui/input";
 import ClientModal from "@/components/ClientModal";
 import ClientDetailModal from "@/components/ClientDetailModal";
 
+const MEMBERSHIP_TYPES = [
+  { value: "", label: "Todos los tipos" },
+  { value: "unlimited", label: "Ilimitado" },
+  { value: "limited", label: "Limitado" },
+  { value: "weekly", label: "Semanal" },
+  { value: "monthly", label: "Mensual" },
+  { value: "custom", label: "Personalizado" },
+  { value: "free_pass", label: "Pase Libre" },
+  { value: "single_pass", label: "Pase Único" },
+  { value: "none", label: "Sin membresía" },
+];
+
 export default function Clients() {
   const [clients, setClients] = useState([]);
   const [memberships, setMemberships] = useState([]);
@@ -22,6 +34,7 @@ export default function Clients() {
   const [showBulkActivation, setShowBulkActivation] = useState(false);
   const [tab, setTab] = useState("active");
   const [deletingId, setDeletingId] = useState(null);
+  const [membershipFilter, setMembershipFilter] = useState("");
 
   useEffect(() => { loadClients(); }, []);
 
@@ -46,11 +59,16 @@ export default function Clients() {
   const inactiveClients = clients.filter(c => c.active === false);
   const tabClients = tab === "active" ? activeClients : inactiveClients;
 
-  const filtered = tabClients.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search)
-  );
+  const filtered = tabClients.filter(c => {
+    const textMatch = c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.includes(search);
+    if (!textMatch) return false;
+    if (!membershipFilter) return true;
+    const mem = getClientMembership(c.id);
+    if (membershipFilter === "none") return !mem;
+    return mem?.type === membershipFilter;
+  });
 
   function openEdit(client) { setEditClient(client); setShowModal(true); }
   function openCreate() { setEditClient(null); setShowModal(true); }
@@ -116,14 +134,25 @@ export default function Clients() {
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nombre, email o teléfono..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-10 bg-card border-border text-white placeholder:text-muted-foreground"
-        />
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre, email o teléfono..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-10 bg-card border-border text-white placeholder:text-muted-foreground"
+          />
+        </div>
+        <select
+          value={membershipFilter}
+          onChange={e => setMembershipFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg bg-card border border-border text-sm text-white"
+        >
+          {MEMBERSHIP_TYPES.map(t => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
       </div>
 
       {loading ? (
