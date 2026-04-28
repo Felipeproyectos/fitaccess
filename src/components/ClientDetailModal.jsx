@@ -73,7 +73,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   const showStartDate = selectedPlan && !isFreePass && !isSinglePass;
 
   async function createMembershipWithQR() {
-    if (!membershipForm.plan_id) return;
+    if (!membershipForm.plan_id || !selectedPlan) return;
     setCreatingMembership(true);
     setMembershipResult(null);
     const paymentData = {
@@ -88,7 +88,10 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       confirmed: membershipForm.payment_method ? true : false
     };
     
-    if (isFreePass) {
+    const planIsFreePass = selectedPlan.type === "free_pass";
+    const planIsSinglePass = selectedPlan.type === "single_pass";
+    
+    if (planIsFreePass) {
       paymentData.use_date = membershipForm.use_date;
       paymentData.start_date = membershipForm.use_date;
     } else {
