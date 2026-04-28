@@ -192,9 +192,9 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
               <p className="text-sm font-semibold text-white">Confirmar Cambio</p>
               <div className="bg-background border border-border rounded-xl p-5 space-y-2">
                 <p className="text-white"><span className="text-muted-foreground">Método:</span> {selectedMethod === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</p>
-                <p className="text-white"><span className="text-muted-foreground">Pagos a actualizar:</span> {payments.filter(p => selectedIds.has(p.client_id) && p.confirmed).length}</p>
+                <p className="text-white"><span className="text-muted-foreground">Clientes a actualizar:</span> {selectedIds.size}</p>
               </div>
-              <p className="text-xs text-muted-foreground">Se actualizará el método de pago preferido de los {selectedIds.size} cliente{selectedIds.size !== 1 ? "s" : ""} seleccionados.</p>
+              <p className="text-xs text-muted-foreground">Se asignará el método de pago preferido a los {selectedIds.size} cliente{selectedIds.size !== 1 ? "s" : ""} seleccionados con membresía activa.</p>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setStep(2)} className="flex-1" disabled={processing}>← Atrás</Button>
                 <Button onClick={confirmUpdate} disabled={processing} className="flex-1 bg-primary hover:bg-primary/90 gap-2">
