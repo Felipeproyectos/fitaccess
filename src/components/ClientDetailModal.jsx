@@ -14,6 +14,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   const [qrCodes, setQrCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [showNewMembership, setShowNewMembership] = useState(false);
   const [membershipForm, setMembershipForm] = useState({
     plan_id: "",
@@ -31,11 +32,12 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
 
   useEffect(() => {
     async function load() {
-      const [mems, qrs, ps, gyms] = await Promise.all([
+      const [mems, qrs, ps, gyms, pays] = await Promise.all([
         base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
         base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
         base44.entities.MembershipPlan.filter({ active: true }),
-        base44.entities.Gym.list("-created_date", 1)
+        base44.entities.Gym.list("-created_date", 1),
+        base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
       ]);
 
       // Deduplicar: por cada combinación plan_id+start_date, conservar solo el más reciente
@@ -57,6 +59,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       setMemberships(cleanMems);
       setQrCodes(qrs);
       setPlans(ps);
+      setPayments(pays);
       if (gyms.length > 0) setGym(gyms[0]);
       setLoading(false);
     }
@@ -168,7 +171,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
         </div>
 
         {activeMembership && !editingMembership && (
-          <div className="bg-background rounded-xl p-4 border border-border space-y-2">
+          <div className="bg-background rounded-xl p-4 border border-border space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Membresía Activa</p>
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground hover:text-white gap-1"
@@ -188,6 +191,15 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                 <span>{activeMembership.remaining_accesses} accesos</span>
               )}
             </div>
+            {(() => {
+              const hasPayment = payments.some(p => p.confirmed && p.plan_id === activeMembership.plan_id);
+              return (
+                <div className={`flex items-center gap-2 text-xs font-medium px-2.5 py-1.5 rounded-lg ${hasPayment ? 'bg-green-400/20 text-green-400' : 'bg-orange-400/20 text-orange-400'}`}>
+                  <span>{hasPayment ? '✓' : '⚠'}</span>
+                  <span>Estado de Pago: {hasPayment ? 'Pagado' : 'Pendiente'}</span>
+                </div>
+              );
+            })()}
           </div>
         )}
 
