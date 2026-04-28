@@ -32,17 +32,26 @@ export default function Clients() {
 
   async function loadClients() {
     setLoading(true);
-    const [data, mems, ps, pays] = await Promise.all([
-      base44.entities.Client.list("-created_date", 100),
-      base44.entities.Membership.list("-created_date", 500),
-      base44.entities.MembershipPlan.filter({ active: true }),
-      base44.entities.Payment.filter({ confirmed: true })
-    ]);
-    setClients(data);
-    setMemberships(mems);
-    setPlans(ps);
-    setPayments(pays);
-    setLoading(false);
+    try {
+      const [data, mems, ps, pays] = await Promise.all([
+        base44.entities.Client.list("-created_date", 100),
+        base44.entities.Membership.list("-created_date", 500),
+        base44.entities.MembershipPlan.filter({ active: true }),
+        base44.entities.Payment.filter({ confirmed: true })
+      ]);
+      setClients(data);
+      setMemberships(mems);
+      setPlans(ps);
+      setPayments(pays);
+    } catch (error) {
+      console.error("Error loading clients data:", error);
+      setClients([]);
+      setMemberships([]);
+      setPlans([]);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function getClientMembership(clientId) {
