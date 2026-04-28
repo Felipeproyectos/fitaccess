@@ -30,6 +30,16 @@
       "type": "string",
       "title": "Notas"
     },
+    "preferred_payment_method": {
+      "type": "string",
+      "title": "M\u00e9todo de Pago Preferido",
+      "enum": [
+        "efectivo",
+        "transferencia",
+        "no_especificado"
+      ],
+      "default": "no_especificado"
+    },
     "active": {
       "type": "boolean",
       "title": "Activo",
@@ -39,5 +49,27 @@
   "required": [
     "name",
     "gym_id"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

@@ -107,7 +107,8 @@ export default function BulkImportModal({ onClose, onImported, gymId }) {
         phone: row.telefono?.trim() || undefined,
         notes: row.notas?.trim() || undefined,
         gym_id: gymId || "default",
-        active: true
+        active: true,
+        preferred_payment_method: "no_especificado"
       });
       created++;
     }

@@ -38,6 +38,17 @@
       "type": "string",
       "title": "Fecha de Uso (Pase Libre)"
     },
+    "payment_method": {
+      "type": "string",
+      "title": "M\u00e9todo de Pago",
+      "enum": [
+        "Efectivo",
+        "Transferencia",
+        "Tarjeta de D\u00e9bito",
+        "Tarjeta de Cr\u00e9dito"
+      ],
+      "default": "Efectivo"
+    },
     "confirmed": {
       "type": "boolean",
       "title": "Confirmado",
@@ -56,5 +67,27 @@
     "client_id",
     "gym_id",
     "amount"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

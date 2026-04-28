@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2 } from "lucide-react";
+import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2, AlertTriangle } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import BulkImportModal from "@/components/BulkImportModal";
 import BulkActivationModal from "@/components/BulkActivationModal";
@@ -90,8 +90,29 @@ export default function Clients() {
     { label: "Vista actual (filtrada)", filename: "clientes_filtrado", headers: clientHeaders, rows: clientRows },
   ];
 
+  const clientsWithoutPayment = clients.filter(c => c.active !== false && (!c.preferred_payment_method || c.preferred_payment_method === "no_especificado"));
+
   return (
     <div className="p-6 space-y-6">
+      {clientsWithoutPayment.length > 0 && (
+        <div className="flex items-start gap-3 bg-orange-400/10 border border-orange-400/30 rounded-xl p-4">
+          <AlertTriangle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-orange-400">
+              {clientsWithoutPayment.length} cliente{clientsWithoutPayment.length !== 1 ? "s" : ""} sin método de pago especificado
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Edita cada cliente para asignar "Efectivo" o "Transferencia" como método de pago preferido.
+            </p>
+          </div>
+          <button
+            onClick={() => setMembershipFilter("")}
+            className="text-xs text-orange-400 underline shrink-0 hover:text-orange-300"
+          >
+            Ver todos
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Clientes</h1>
@@ -175,6 +196,17 @@ export default function Clients() {
                 </div>
               </div>
               <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
+              {(!client.preferred_payment_method || client.preferred_payment_method === "no_especificado") && (
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertTriangle className="w-3 h-3 text-orange-400" />
+                  <span className="text-xs text-orange-400">Sin método de pago</span>
+                </div>
+              )}
+              {client.preferred_payment_method && client.preferred_payment_method !== "no_especificado" && (
+                <span className="text-xs text-muted-foreground mt-0.5 block">
+                  {client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}
+                </span>
+              )}
               {client.email && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Mail className="w-3 h-3 text-muted-foreground" />
