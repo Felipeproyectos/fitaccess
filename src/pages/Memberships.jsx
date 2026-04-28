@@ -79,20 +79,7 @@ export default function Memberships() {
         </div>
       </div>
 
-      {/* Alerta membresías activas sin método de pago */}
-      {!loading && membersWithoutPayment.length > 0 && (
-        <div className="flex items-start gap-3 bg-orange-400/10 border border-orange-400/30 rounded-xl p-4">
-          <AlertTriangle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-orange-400">
-              {membersWithoutPayment.length} membresía{membersWithoutPayment.length !== 1 ? "s" : ""} activa{membersWithoutPayment.length !== 1 ? "s" : ""} sin método de pago especificado
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Estos clientes tienen una membresía activa pero no tienen método de pago registrado.
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* Membresías activas en lista */}
       {!loading && memberships.length > 0 && (
