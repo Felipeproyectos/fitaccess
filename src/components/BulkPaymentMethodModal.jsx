@@ -213,7 +213,7 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
               <h3 className="text-xl font-bold text-white">¡Actualización completada!</h3>
               <p className="text-green-400 font-medium">{result.updated} cliente{result.updated !== 1 ? "s" : ""} actualizados</p>
               {result.failed > 0 && <p className="text-red-400">{result.failed} errores</p>}
-              <Button onClick={onClose}>Cerrar</Button>
+              <Button onClick={onSaved} className="bg-primary hover:bg-primary/90">Cerrar</Button>
             </div>
           )}
         </div>
