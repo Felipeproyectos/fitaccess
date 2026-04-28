@@ -214,7 +214,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                 className="flex-1 bg-primary hover:bg-primary/90 text-white gap-1">
                 {creatingMembership ? (
                   <><Loader2 className="w-3 h-3 animate-spin" /> Procesando...</>
-                ) : "Crear + Enviar QR"}
+                ) : "Activar Membresía"}
               </Button>
             </div>
           </div>
