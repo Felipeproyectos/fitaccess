@@ -81,73 +81,7 @@ export default function Memberships() {
 
 
 
-      {/* Membresías activas en lista */}
-      {!loading && memberships.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-white">Membresías Activas ({memberships.length})</h2>
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Cliente</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Plan</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Vencimiento</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {memberships.map((mem, i) => {
-                  const client = clients.find(c => c.id === mem.client_id);
-                  const noPayment = client && (!client.preferred_payment_method || client.preferred_payment_method === "no_especificado");
-                  return (
-                    <tr key={mem.id} className={`border-b border-border last:border-0 ${noPayment ? "bg-orange-400/5" : ""}`}>
-                      <td className="px-4 py-3 text-white font-medium">
-                        <div className="flex items-center gap-2">
-                          {noPayment && <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
-                          {client ? client.name : <span className="text-muted-foreground text-xs italic">Cliente eliminado</span>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{mem.plan_name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{mem.end_date || "—"}</td>
-                      <td className="px-4 py-3">
-                        {!client ? (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        ) : noPayment ? (
-                          editingPaymentClientId === mem.client_id ? (
-                            <div className="flex items-center gap-1">
-                              <select
-                                autoFocus
-                                className="text-xs bg-background border border-orange-400/60 text-white rounded px-2 py-1"
-                                defaultValue=""
-                                disabled={savingPayment}
-                                onChange={e => e.target.value && savePaymentMethod(mem.client_id, e.target.value)}
-                              >
-                                <option value="" disabled>Seleccionar...</option>
-                                <option value="efectivo">💵 Efectivo</option>
-                                <option value="transferencia">🏦 Transferencia</option>
-                              </select>
-                              <button onClick={() => setEditingPaymentClientId(null)} className="text-muted-foreground hover:text-white text-xs ml-1">✕</button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setEditingPaymentClientId(mem.client_id)}
-                              className="text-xs text-orange-400 font-medium hover:underline hover:text-orange-300 transition-colors"
-                            >
-                              Sin especificar →
-                            </button>
-                          )
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+
 
       {/* Planes */}
       <div className="space-y-2">
