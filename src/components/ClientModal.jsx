@@ -12,7 +12,6 @@ export default function ClientModal({ client, onClose, onSaved, hasActiveMembers
     email: client?.email || "",
     phone: client?.phone || "",
     notes: client?.notes || "",
-    preferred_payment_method: client?.preferred_payment_method || "no_especificado",
     active: client?.active !== false,
     gym_id: client?.gym_id || "default"
   });
@@ -75,27 +74,6 @@ export default function ClientModal({ client, onClose, onSaved, hasActiveMembers
             <Label className="text-muted-foreground mb-1.5 block">Notas</Label>
             <Input value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Observaciones..."
               className="bg-background border-border text-white" />
-          </div>
-          <div>
-            <Label className="text-muted-foreground mb-1.5 block">Método de Pago Preferido</Label>
-            {client && !hasActiveMembership ? (
-              <div className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-muted-foreground opacity-60 cursor-not-allowed">
-                Sin membresía activa
-              </div>
-            ) : (
-              <select value={form.preferred_payment_method} onChange={e => set("preferred_payment_method", e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg bg-background border text-sm ${form.preferred_payment_method === "no_especificado" ? "border-orange-400/60 text-orange-400" : "border-border text-white"}`}>
-                <option value="no_especificado">⚠️ No especificado</option>
-                <option value="efectivo">💵 Efectivo</option>
-                <option value="transferencia">🏦 Transferencia</option>
-              </select>
-            )}
-            {client && !hasActiveMembership && (
-              <p className="text-xs text-muted-foreground mt-1">Asigna una membresía activa primero para registrar el método de pago.</p>
-            )}
-            {hasActiveMembership && form.preferred_payment_method === "no_especificado" && (
-              <p className="text-xs text-orange-400 mt-1">Selecciona un método de pago para evitar alertas.</p>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <input type="checkbox" id="active" checked={form.active} onChange={e => set("active", e.target.checked)}
