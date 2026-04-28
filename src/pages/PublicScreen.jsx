@@ -73,16 +73,20 @@ export default function PublicScreen() {
       if (e.key === "Enter") {
         clearTimeout(scanTimer.current);
         const token = scanBuffer.current.trim();
-        if (token.length > 4) processLocalScan(token);
-        scanBuffer.current = "";
-      } else if (e.key.length === 1) {
+        if (token.length > 4) {
+          processLocalScan(token);
+          scanBuffer.current = "";
+        }
+      } else if (e.key.length === 1 || ["-", "_"].includes(e.key)) {
         scanBuffer.current += e.key;
         clearTimeout(scanTimer.current);
         scanTimer.current = setTimeout(() => {
           const token = scanBuffer.current.trim();
-          if (token.length > 4) processLocalScan(token);
+          if (token.length > 4) {
+            processLocalScan(token);
+          }
           scanBuffer.current = "";
-        }, 200);
+        }, 300);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
