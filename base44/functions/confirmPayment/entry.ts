@@ -36,6 +36,14 @@ Deno.serve(async (req) => {
     // Invalidate old QRs in parallel
     await Promise.all(oldQRs.map(qr => base44.asServiceRole.entities.QRCode.update(qr.id, { active: false })));
 
+    // Remove duplicate memberships: same client + same plan + same start_date, keep only the latest
+    const existingMems = await base44.asServiceRole.entities.Membership.filter({ client_id: payment.client_id, plan_id: payment.plan_id });
+    const startDateStr = payment.start_date || new Date().toISOString().split('T')[0];
+    const duplicates = existingMems.filter(m => m.start_date === startDateStr);
+    if (duplicates.length > 0) {
+      await Promise.all(duplicates.map(m => base44.asServiceRole.entities.Membership.delete(m.id)));
+    }
+
     const isSinglePass = plan.type === 'single_pass';
     const isFreePass = plan.type === 'free_pass';
 

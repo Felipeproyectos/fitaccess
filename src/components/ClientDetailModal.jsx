@@ -31,12 +31,29 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   useEffect(() => {
     async function load() {
       const [mems, qrs, ps, gyms] = await Promise.all([
-        base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
+        base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 20),
         base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
         base44.entities.MembershipPlan.filter({ active: true }),
         base44.entities.Gym.list("-created_date", 1)
       ]);
-      setMemberships(mems);
+
+      // Deduplicar: por cada combinación plan_id+start_date, conservar solo el más reciente
+      const seen = new Map();
+      const toDelete = [];
+      for (const m of mems) {
+        const key = `${m.plan_id}_${m.start_date}`;
+        if (seen.has(key)) {
+          toDelete.push(m.id);
+        } else {
+          seen.set(key, m);
+        }
+      }
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map(id => base44.entities.Membership.delete(id)));
+      }
+      const cleanMems = mems.filter(m => !toDelete.includes(m.id));
+
+      setMemberships(cleanMems);
       setQrCodes(qrs);
       setPlans(ps);
       if (gyms.length > 0) setGym(gyms[0]);
