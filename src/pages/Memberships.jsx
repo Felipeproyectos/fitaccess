@@ -1,23 +1,33 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Edit2, Trash2, Dumbbell } from "lucide-react";
+import { Plus, Edit2, Trash2, Dumbbell, AlertTriangle } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import { Button } from "@/components/ui/button";
 import PlanModal from "@/components/PlanModal";
 
 export default function Memberships() {
   const [plans, setPlans] = useState([]);
+  const [memberships, setMemberships] = useState([]);
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editPlan, setEditPlan] = useState(null);
 
-  useEffect(() => { loadPlans(); }, []);
-  async function loadPlans() {
+  useEffect(() => { loadData(); }, []);
+  async function loadData() {
     setLoading(true);
-    const data = await base44.entities.MembershipPlan.list("-created_date", 50);
+    const [data, mems, cls] = await Promise.all([
+      base44.entities.MembershipPlan.list("-created_date", 50),
+      base44.entities.Membership.filter({ status: "active" }, "-created_date", 200),
+      base44.entities.Client.list("-created_date", 200)
+    ]);
     setPlans(data);
+    setMemberships(mems);
+    setClients(cls);
     setLoading(false);
   }
+
+  async function loadPlans() { loadData(); }
 
   async function deletePlan(id) {
     if (!confirm("¿Eliminar este plan?")) return;
@@ -39,6 +49,11 @@ export default function Memberships() {
     { label: "Planes de Membresía", filename: "planes_membresia", headers: planHeaders, rows: planRows },
   ];
 
+  const membersWithoutPayment = memberships.filter(m => {
+    const client = clients.find(c => c.id === m.client_id);
+    return !client?.preferred_payment_method || client?.preferred_payment_method === "no_especificado";
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -54,51 +69,125 @@ export default function Memberships() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-40 rounded-xl bg-card animate-pulse" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plans.map(plan => (
-            <div key={plan.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Dumbbell className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => { setEditPlan(plan); setShowModal(true); }}>
-                    <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => deletePlan(plan.id)}>
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                  </Button>
-                </div>
-              </div>
-              <h3 className="font-semibold text-white text-lg">{plan.name}</h3>
-              <div className="flex items-center gap-2 mt-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[plan.type] || typeColors2[plan.type] || "text-muted-foreground bg-muted"}`}>
-                  {typeLabels[plan.type] || plan.type}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1">
-                {plan.type === "single_pass" || plan.type === "free_pass"
-                  ? <p className="text-sm text-muted-foreground">Se puede utilizar solo una vez</p>
-                  : plan.duration_days ? <p className="text-sm text-muted-foreground">{plan.duration_days} días</p> : null
-                }
-                {plan.max_accesses && <p className="text-sm text-muted-foreground">{plan.max_accesses} accesos</p>}
-                {plan.description && <p className="text-xs text-muted-foreground mt-2">{plan.description}</p>}
-              </div>
-              <p className="text-2xl font-bold text-white mt-4">${plan.price?.toLocaleString()}</p>
-            </div>
-          ))}
-          {plans.length === 0 && (
-            <div className="col-span-3 text-center py-16 text-muted-foreground">
-              No hay planes creados. ¡Crea el primero!
-            </div>
-          )}
+      {/* Alerta membresías activas sin método de pago */}
+      {!loading && membersWithoutPayment.length > 0 && (
+        <div className="flex items-start gap-3 bg-orange-400/10 border border-orange-400/30 rounded-xl p-4">
+          <AlertTriangle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-orange-400">
+              {membersWithoutPayment.length} membresía{membersWithoutPayment.length !== 1 ? "s" : ""} activa{membersWithoutPayment.length !== 1 ? "s" : ""} sin método de pago especificado
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Estos clientes tienen una membresía activa pero no tienen método de pago registrado.
+            </p>
+          </div>
         </div>
       )}
+
+      {/* Membresías activas en lista */}
+      {!loading && memberships.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-white">Membresías Activas ({memberships.length})</h2>
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Cliente</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Plan</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Vencimiento</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {memberships.map((mem, i) => {
+                  const client = clients.find(c => c.id === mem.client_id);
+                  const noPayment = !client?.preferred_payment_method || client?.preferred_payment_method === "no_especificado";
+                  return (
+                    <tr key={mem.id} className={`border-b border-border last:border-0 ${noPayment ? "bg-orange-400/5" : ""}`}>
+                      <td className="px-4 py-3 text-white font-medium">
+                        <div className="flex items-center gap-2">
+                          {noPayment && <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
+                          {client?.name || mem.client_id}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{mem.plan_name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{mem.end_date || "—"}</td>
+                      <td className="px-4 py-3">
+                        {noPayment
+                          ? <span className="text-xs text-orange-400 font-medium">Sin especificar</span>
+                          : <span className="text-xs text-muted-foreground">{client?.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
+                        }
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Planes */}
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-white">Planes Disponibles ({plans.length})</h2>
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-14 rounded-xl bg-card animate-pulse" />)}
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Nombre</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Tipo</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Duración</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Accesos</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Precio</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {plans.map(plan => (
+                  <tr key={plan.id} className="border-b border-border last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+                          <Dumbbell className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <span className="font-medium text-white">{plan.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[plan.type] || typeColors2[plan.type] || "text-muted-foreground bg-muted"}`}>
+                        {typeLabels[plan.type] || plan.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {plan.type === "single_pass" || plan.type === "free_pass" ? "Pase único" : plan.duration_days ? `${plan.duration_days} días` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{plan.max_accesses ?? "Ilimitado"}</td>
+                    <td className="px-4 py-3 text-white font-bold">${plan.price?.toLocaleString('es-CL')}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => { setEditPlan(plan); setShowModal(true); }}>
+                          <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => deletePlan(plan.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {plans.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">No hay planes creados. ¡Crea el primero!</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {showModal && (
         <PlanModal plan={editPlan} onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); loadPlans(); }} />
