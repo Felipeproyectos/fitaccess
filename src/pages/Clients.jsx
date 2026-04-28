@@ -210,17 +210,11 @@ export default function Clients() {
                   </div>
                 </div>
                 <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
-                {!isInactive && (() => {
-                  const pm = getClientPaymentMethod(client.id);
-                  if (!pm) return (
-                    <div className="flex items-center gap-1 mt-1">
-                      <AlertTriangle className="w-3 h-3 text-orange-400" />
-                      <span className="text-xs text-orange-400">Sin método de pago</span>
-                    </div>
-                  );
+                {!isInactive && hasActiveMem && (() => {
+                  const hasPayment = payments.some(p => p.client_id === client.id && p.confirmed);
                   return (
-                    <span className="text-xs text-muted-foreground mt-0.5 block">
-                      {pm === "Efectivo" ? "💵 Efectivo" : pm === "Transferencia" ? "🏦 Transferencia" : pm}
+                    <span className={`text-xs mt-0.5 block ${hasPayment ? 'text-green-400' : 'text-orange-400'}`}>
+                      {hasPayment ? '✓ Pagado' : '⚠ Pendiente'}
                     </span>
                   );
                 })()}
@@ -270,7 +264,7 @@ export default function Clients() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Email</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Teléfono</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Membresía</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Pago</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Estado de Pago</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -318,13 +312,11 @@ export default function Clients() {
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {(() => {
-                        const pm = getClientPaymentMethod(client.id);
-                        if (!isInactive && !pm) return (
-                          <span className="text-xs text-orange-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Sin método</span>
-                        );
+                        const hasPayment = payments.some(p => p.client_id === client.id && p.confirmed);
+                        if (isInactive || !mem) return <span className="text-xs text-muted-foreground">—</span>;
                         return (
-                          <span className="text-xs text-muted-foreground">
-                            {pm === "Efectivo" ? "💵 Efectivo" : pm === "Transferencia" ? "🏦 Transferencia" : pm || "—"}
+                          <span className={`text-xs ${hasPayment ? 'text-green-400' : 'text-orange-400'}`}>
+                            {hasPayment ? '✓ Pagado' : '⚠ Pendiente'}
                           </span>
                         );
                       })()}
