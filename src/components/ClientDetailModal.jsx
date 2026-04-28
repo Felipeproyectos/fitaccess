@@ -76,6 +76,15 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     if (!membershipForm.plan_id || !selectedPlan) return;
     setCreatingMembership(true);
     setMembershipResult(null);
+    
+    const planIsFreePass = selectedPlan.type === "free_pass";
+    const planIsSinglePass = selectedPlan.type === "single_pass";
+    
+    let startDate = membershipForm.start_date;
+    if (!startDate && !planIsFreePass && !planIsSinglePass) {
+      startDate = format(new Date(), "yyyy-MM-dd");
+    }
+    
     const paymentData = {
       client_id: client.id,
       client_name: client.name,
@@ -88,14 +97,11 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       confirmed: membershipForm.payment_method ? true : false
     };
     
-    const planIsFreePass = selectedPlan.type === "free_pass";
-    const planIsSinglePass = selectedPlan.type === "single_pass";
-    
     if (planIsFreePass) {
       paymentData.use_date = membershipForm.use_date;
       paymentData.start_date = membershipForm.use_date;
     } else {
-      paymentData.start_date = membershipForm.start_date;
+      paymentData.start_date = startDate;
     }
     
     const payment = await base44.entities.Payment.create(paymentData);
