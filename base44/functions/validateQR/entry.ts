@@ -19,19 +19,22 @@ Deno.serve(async (req) => {
     // Find QR linked to membership
     const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ token });
     if (!qrCodes.length) {
-      return Response.json({ status: 'invalid', client_name: 'Desconocido', message: 'Código QR inválido o eliminado' });
+      return Response.json({ status: 'invalid', client_name: 'Desconocido', message: 'Código QR inválido' });
     }
     const qrCode = qrCodes[0];
+    
+    // Obtener cliente para mostrar nombre si QR está inactivo
+    const clients = await base44.asServiceRole.entities.Client.filter({ id: qrCode.client_id });
+    const client = clients[0];
+    
     if (!qrCode.active) {
-      return Response.json({ status: 'invalid', message: 'Código QR ya utilizado o expirado' });
+      return Response.json({ status: 'invalid', client_name: client?.name || 'Desconocido', message: 'Sin Membresía Activa' });
     }
 
     const memberships = await base44.asServiceRole.entities.Membership.filter({ id: qrCode.membership_id });
     const membership = memberships[0];
-    if (!membership) return Response.json({ status: 'invalid', message: 'Membresía no encontrada' });
+    if (!membership) return Response.json({ status: 'invalid', client_name: client?.name || 'Desconocido', message: 'Membresía no encontrada' });
 
-    const clients = await base44.asServiceRole.entities.Client.filter({ id: qrCode.client_id });
-    const client = clients[0];
     if (!client) return Response.json({ status: 'invalid', message: 'Cliente no encontrado' });
 
     const today = new Date().toISOString().split('T')[0];

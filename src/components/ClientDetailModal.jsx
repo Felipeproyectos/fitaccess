@@ -106,9 +106,9 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
 
   async function deleteMembership(membershipId) {
     setDeletingMembership(membershipId);
-    // Eliminar QR codes asociados a esta membresía
-    const qrsToDelete = await base44.entities.QRCode.filter({ membership_id: membershipId });
-    await Promise.all(qrsToDelete.map(qr => base44.entities.QRCode.delete(qr.id)));
+    // Marcar QR codes asociados como inactivos en lugar de eliminarlos
+    const qrsToInactivate = await base44.entities.QRCode.filter({ membership_id: membershipId });
+    await Promise.all(qrsToInactivate.map(qr => base44.entities.QRCode.update(qr.id, { active: false })));
     // Eliminar la membresía
     await base44.entities.Membership.delete(membershipId);
     const [mems, qrs] = await Promise.all([
