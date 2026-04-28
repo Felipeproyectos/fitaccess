@@ -92,8 +92,13 @@ export default function Clients() {
     { label: "Vista actual (filtrada)", filename: "clientes_filtrado", headers: clientHeaders, rows: clientRows },
   ];
 
-  const clientsWithoutPayment = clients.filter(c => c.active !== false && (!c.preferred_payment_method || c.preferred_payment_method === "no_especificado"));
   const clientsWithoutMembership = clients.filter(c => c.active !== false && !memberships.some(m => m.client_id === c.id && (m.status === "active" || m.status === "expiring")));
+  // Only flag clients who HAVE an active membership but no payment method
+  const clientsWithoutPayment = clients.filter(c =>
+    c.active !== false &&
+    memberships.some(m => m.client_id === c.id && (m.status === "active" || m.status === "expiring")) &&
+    (!c.preferred_payment_method || c.preferred_payment_method === "no_especificado")
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -306,6 +311,7 @@ export default function Clients() {
       {showModal && (
         <ClientModal
           client={editClient}
+          hasActiveMembership={editClient ? memberships.some(m => m.client_id === editClient.id && (m.status === "active" || m.status === "expiring")) : true}
           onClose={() => setShowModal(false)}
           onSaved={() => { setShowModal(false); loadClients(); }}
         />

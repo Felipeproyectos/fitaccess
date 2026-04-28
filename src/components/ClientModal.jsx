@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function ClientModal({ client, onClose, onSaved }) {
+export default function ClientModal({ client, onClose, onSaved, hasActiveMembership }) {
   const [form, setForm] = useState({
     name: client?.name || "",
     rut: client?.rut || "",
@@ -77,14 +77,23 @@ export default function ClientModal({ client, onClose, onSaved }) {
               className="bg-background border-border text-white" />
           </div>
           <div>
-            <Label className="text-muted-foreground mb-1.5 block">Método de Pago Preferido *</Label>
-            <select value={form.preferred_payment_method} onChange={e => set("preferred_payment_method", e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg bg-background border text-sm ${form.preferred_payment_method === "no_especificado" ? "border-orange-400/60 text-orange-400" : "border-border text-white"}`}>
-              <option value="no_especificado">⚠️ No especificado</option>
-              <option value="efectivo">💵 Efectivo</option>
-              <option value="transferencia">🏦 Transferencia</option>
-            </select>
-            {form.preferred_payment_method === "no_especificado" && (
+            <Label className="text-muted-foreground mb-1.5 block">Método de Pago Preferido</Label>
+            {client && !hasActiveMembership ? (
+              <div className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-muted-foreground opacity-60 cursor-not-allowed">
+                Sin membresía activa
+              </div>
+            ) : (
+              <select value={form.preferred_payment_method} onChange={e => set("preferred_payment_method", e.target.value)}
+                className={`w-full px-3 py-2 rounded-lg bg-background border text-sm ${form.preferred_payment_method === "no_especificado" ? "border-orange-400/60 text-orange-400" : "border-border text-white"}`}>
+                <option value="no_especificado">⚠️ No especificado</option>
+                <option value="efectivo">💵 Efectivo</option>
+                <option value="transferencia">🏦 Transferencia</option>
+              </select>
+            )}
+            {client && !hasActiveMembership && (
+              <p className="text-xs text-muted-foreground mt-1">Asigna una membresía activa primero para registrar el método de pago.</p>
+            )}
+            {hasActiveMembership && form.preferred_payment_method === "no_especificado" && (
               <p className="text-xs text-orange-400 mt-1">Selecciona un método de pago para evitar alertas.</p>
             )}
           </div>
