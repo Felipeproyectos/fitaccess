@@ -8,6 +8,7 @@ import { toTitleCase } from "@/utils";
 export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   const [step, setStep] = useState(1);
   const [clients, setClients] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [search, setSearch] = useState("");
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -16,7 +17,13 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    base44.entities.Client.filter({ active: true }, "-created_date", 200).then(setClients);
+    Promise.all([
+      base44.entities.Client.filter({ active: true }, "-created_date", 200),
+      base44.entities.Payment.list("-created_date", 500)
+    ]).then(([cl, pays]) => {
+      setClients(cl);
+      setPayments(pays);
+    });
   }, []);
 
   const filteredClients = clients.filter(c =>
@@ -46,12 +53,17 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   async function confirmUpdate() {
     setProcessing(true);
     const selected = clients.filter(c => selectedIds.has(c.id));
-    setProgress({ done: 0, total: selected.length });
+    const selectedClientIds = selected.map(c => c.id);
+    
+    // Obtener todos los pagos confirmados de los clientes seleccionados
+    const clientPayments = payments.filter(p => selectedClientIds.includes(p.client_id));
+    
+    setProgress({ done: 0, total: clientPayments.length });
     let updated = 0, failed = 0;
 
-    for (const client of selected) {
+    for (const payment of clientPayments) {
       try {
-        await base44.entities.Client.update(client.id, { preferred_payment_method: selectedMethod });
+        await base44.entities.Payment.update(payment.id, { payment_method: selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1) });
         updated++;
       } catch {
         failed++;
@@ -102,20 +114,25 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
                     className="accent-red-500" />
                   <span className="text-xs text-muted-foreground font-medium">Seleccionar todos ({filteredClients.length})</span>
                 </div>
-                {filteredClients.map(c => (
-                  <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-0 cursor-pointer hover:bg-white/5"
-                    onClick={() => toggleClient(c.id)}>
-                    <input type="checkbox" readOnly checked={selectedIds.has(c.id)} className="accent-red-500" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white">{toTitleCase(c.name)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {c.preferred_payment_method && c.preferred_payment_method !== "no_especificado"
-                          ? (c.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia")
-                          : <span className="text-orange-400">Sin método</span>}
-                      </p>
+                {filteredClients.map(c => {
+                  const clientPayments = payments.filter(p => p.client_id === c.id && p.confirmed);
+                  const lastPayment = clientPayments.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
+                  const method = lastPayment?.payment_method;
+                  return (
+                    <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-0 cursor-pointer hover:bg-white/5"
+                      onClick={() => toggleClient(c.id)}>
+                      <input type="checkbox" readOnly checked={selectedIds.has(c.id)} className="accent-red-500" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white">{toTitleCase(c.name)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {method
+                            ? (method === "Efectivo" ? "💵 Efectivo" : "🏦 Transferencia")
+                            : <span className="text-orange-400">Sin método</span>}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Button onClick={() => setStep(2)} disabled={selectedIds.size === 0} className="w-full bg-primary hover:bg-primary/90">
                 Siguiente →
@@ -149,7 +166,7 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
               <p className="text-sm font-semibold text-white">Confirmar Cambio</p>
               <div className="bg-background border border-border rounded-xl p-5 space-y-2">
                 <p className="text-white"><span className="text-muted-foreground">Método:</span> {selectedMethod === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</p>
-                <p className="text-white"><span className="text-muted-foreground">Clientes a actualizar:</span> {selectedIds.size}</p>
+                <p className="text-white"><span className="text-muted-foreground">Pagos a actualizar:</span> {payments.filter(p => selectedIds.has(p.client_id) && p.confirmed).length}</p>
               </div>
               <p className="text-xs text-muted-foreground">Se actualizará el método de pago preferido de los {selectedIds.size} cliente{selectedIds.size !== 1 ? "s" : ""} seleccionados.</p>
               <div className="flex gap-2">
