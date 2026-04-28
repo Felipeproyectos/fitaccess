@@ -36,6 +36,8 @@
       "enum": [
         "efectivo",
         "transferencia",
+        "tarjeta_debito",
+        "tarjeta_credito",
         "no_especificado"
       ],
       "default": "no_especificado"

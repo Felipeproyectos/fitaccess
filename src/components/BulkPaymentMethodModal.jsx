@@ -81,17 +81,23 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
     setProgress({ done: 0, total: selected.length });
     let updated = 0, failed = 0;
 
-    const methodFormatted = selectedMethod === "efectivo" ? "efectivo" : "transferencia";
+    // Map selected method to payment method format
+    const paymentMethodMap = {
+      "efectivo": "Efectivo",
+      "transferencia": "Transferencia",
+      "tarjeta_debito": "Tarjeta de Débito",
+      "tarjeta_credito": "Tarjeta de Crédito",
+    };
 
     for (const client of selected) {
       try {
         // Update client's preferred payment method
-        await base44.entities.Client.update(client.id, { preferred_payment_method: methodFormatted });
+        await base44.entities.Client.update(client.id, { preferred_payment_method: selectedMethod });
 
         // Update all confirmed payments for this client
         const clientPayments = payments.filter(p => p.client_id === client.id && p.confirmed);
         for (const payment of clientPayments) {
-          const paymentMethod = selectedMethod === "efectivo" ? "Efectivo" : "Transferencia";
+          const paymentMethod = paymentMethodMap[selectedMethod];
           await base44.entities.Payment.update(payment.id, { payment_method: paymentMethod });
         }
         updated++;
@@ -111,6 +117,8 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   const methods = [
     { value: "efectivo", label: "💵 Efectivo", desc: "Pago en efectivo presencial" },
     { value: "transferencia", label: "🏦 Transferencia", desc: "Transferencia bancaria o digital" },
+    { value: "tarjeta_debito", label: "🏧 Tarjeta de Débito", desc: "Pago con tarjeta de débito" },
+    { value: "tarjeta_credito", label: "💳 Tarjeta de Crédito", desc: "Pago con tarjeta de crédito" },
   ];
 
   return (
@@ -194,7 +202,7 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
             <>
               <p className="text-sm font-semibold text-white">Confirmar Cambio</p>
               <div className="bg-background border border-border rounded-xl p-5 space-y-2">
-                <p className="text-white"><span className="text-muted-foreground">Método:</span> {selectedMethod === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</p>
+                <p className="text-white"><span className="text-muted-foreground">Método:</span> {methods.find(m => m.value === selectedMethod)?.label}</p>
                 <p className="text-white"><span className="text-muted-foreground">Clientes a actualizar:</span> {selectedIds.size}</p>
               </div>
               <p className="text-xs text-muted-foreground">Se asignará el método de pago preferido a los {selectedIds.size} cliente{selectedIds.size !== 1 ? "s" : ""} seleccionados con membresía activa.</p>
