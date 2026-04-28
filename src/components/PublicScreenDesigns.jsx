@@ -7,6 +7,7 @@ const resultConfig = {
   expired:          { accent: "#FF3B3B", label: "MEMBRESÍA VENCIDA",     icon: "❌", glow: "rgba(255,59,59,0.4)" },
   invalid:          { accent: "#FF3B3B", label: "CÓDIGO INVÁLIDO",       icon: "🚫", glow: "rgba(255,59,59,0.4)" },
   denied:           { accent: "#FF3B3B", label: "ACCESO DENEGADO",       icon: "⛔", glow: "rgba(255,59,59,0.4)" },
+  no_membership:    { accent: "#FF3B3B", label: "SIN MEMBRESÍA ACTIVA",  icon: "❌", glow: "rgba(255,59,59,0.4)" },
   already_registered: { accent: "#FFD700", label: "YA REGISTRADO HOY",  icon: "🕐", glow: "rgba(255,215,0,0.4)", subtitle: "Ya registraste tu asistencia hoy. ¡Nos vemos mañana!" }
 };
 
