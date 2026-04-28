@@ -28,6 +28,12 @@ Deno.serve(async (req) => {
       .filter(m => m.status === 'active' || m.status === 'expiring')
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
 
+    // Block Sundays
+    const dayOfWeek = now.getDay();
+    if (dayOfWeek === 0) {
+      return Response.json({ status: 'invalid', client_name: client.name, message: 'El gimnasio no abre los domingos' });
+    }
+
     if (!activeMembership) {
       await base44.asServiceRole.entities.Attendance.create({
         client_id: client.id,
