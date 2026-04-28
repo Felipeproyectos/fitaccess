@@ -398,7 +398,7 @@ export default function Clients() {
       {viewClient && (
         <ClientDetailModal
           client={viewClient}
-          onClose={() => setViewClient(null)}
+          onClose={() => { setViewClient(null); loadClients(); }}
           onEdit={() => { openEdit(viewClient); setViewClient(null); }}
         />
       )}
