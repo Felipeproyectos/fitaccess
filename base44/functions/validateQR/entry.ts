@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // Find QR linked to membership
     const qrCodes = await base44.asServiceRole.entities.QRCode.filter({ token });
     if (!qrCodes.length) {
-      return Response.json({ status: 'invalid', message: 'Código QR inválido' });
+      return Response.json({ status: 'invalid', client_name: 'Desconocido', message: 'Código QR inválido o eliminado' });
     }
     const qrCode = qrCodes[0];
     if (!qrCode.active) {
