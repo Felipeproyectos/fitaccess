@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { CheckCircle, Clock, Plus, Search, TrendingUp, Banknote, ArrowRightLeft, CalendarClock } from "lucide-react";
+import { CheckCircle, Clock, Plus, Search, TrendingUp, Banknote, ArrowRightLeft, CalendarClock, Trash2 } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import { toTitleCase } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -263,6 +263,13 @@ export default function Payments() {
                   {payment.confirmed && !isAdvance && (
                     <span className="text-xs px-3 py-1.5 rounded-full bg-green-400/20 text-green-400 font-medium">Confirmado</span>
                   )}
+                  <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-red-400/10"
+                    onClick={async () => {
+                      if (!confirm(`¿Eliminar pago de ${toTitleCase(payment.client_name)} por $${payment.amount?.toLocaleString('es-CL')}?`)) return;
+                      await base44.entities.Payment.delete(payment.id);
+                    }}>
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </Button>
                 </div>
               </div>
             );
