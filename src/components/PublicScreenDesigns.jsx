@@ -46,9 +46,9 @@ export function MinimalGlowResult({ scan }) {
     <div className="absolute inset-0 bg-[#0B0B0B] flex flex-col items-center justify-center gap-10 px-4">
       <div className="absolute inset-0"
         style={{ background: `radial-gradient(circle at center, ${cfg.glow.replace("0.4","0.12")} 0%, transparent 65%)` }} />
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12 }}
+      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 15, stiffness: 200 }}
         className="relative z-10 text-7xl md:text-8xl leading-none">{cfg.icon}</motion.div>
-      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
+      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05, duration: 0.15 }}
         className="relative z-10 text-center space-y-4 max-w-4xl">
         <p className="font-display text-5xl md:text-6xl leading-none" style={{ color: cfg.accent }}>{cfg.label}</p>
         <div className="border rounded-3xl px-8 md:px-16 py-6 md:py-8 bg-white/5 backdrop-blur-sm"
@@ -99,7 +99,7 @@ export function NeonPanelsResult({ scan }) {
     <div className="absolute inset-0 bg-[#080810] flex flex-col items-center justify-center px-4">
       <div className="absolute inset-0"
         style={{ background: `linear-gradient(135deg, #080810 0%, ${cfg.glow.replace("0.4","0.06")} 50%, #080810 100%)` }} />
-      <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }}
+      <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
         className="relative z-10 w-full max-w-4xl mx-auto">
         <div className="rounded-2xl p-8 md:p-12 text-center"
           style={{ border: `2px solid ${cfg.accent}44`, boxShadow: `0 0 80px ${cfg.glow}, inset 0 0 40px ${cfg.glow.replace("0.4","0.04")}` }}>
@@ -146,7 +146,7 @@ export function DarkEleganceResult({ scan }) {
     <div className="absolute inset-0 bg-[#080808] flex flex-col items-center justify-center gap-8 px-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-8 max-w-4xl">
         <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", damping: 14 }}
+          transition={{ type: "spring", damping: 16, stiffness: 210 }}
           className="text-6xl md:text-8xl leading-none" style={{ filter: `drop-shadow(0 0 30px ${cfg.glow})` }}>
           {cfg.icon}
         </motion.div>
@@ -203,9 +203,9 @@ export function DynamicGeometryResult({ scan }) {
       <div className="absolute top-0 right-0 w-16 md:w-24 h-16 md:h-24 border-t-2 border-r-2" style={{ borderColor: cfg.accent + "60" }} />
       <div className="absolute bottom-0 left-0 w-16 md:w-24 h-16 md:h-24 border-b-2 border-l-2" style={{ borderColor: cfg.accent + "60" }} />
       <div className="absolute bottom-0 right-0 w-16 md:w-24 h-16 md:h-24 border-b-2 border-r-2" style={{ borderColor: cfg.accent + "60" }} />
-      <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}
+      <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}
         className="relative z-10 text-center space-y-6 max-w-4xl">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 10 }}
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 16, stiffness: 210 }}
           className="text-6xl md:text-8xl leading-none">{cfg.icon}</motion.div>
         <div className="px-8 md:px-16 py-4 md:py-6" style={{ borderLeft: `4px solid ${cfg.accent}`, borderRight: `4px solid ${cfg.accent}` }}>
           <p className="font-display text-4xl md:text-6xl leading-none" style={{ color: cfg.accent }}>{cfg.label}</p>

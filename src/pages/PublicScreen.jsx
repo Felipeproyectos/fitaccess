@@ -9,7 +9,7 @@ import {
 } from "@/components/PublicScreenDesigns";
 
 const IDLE_TIMEOUT = 5 * 60 * 1000;
-const SCAN_DISPLAY_TIMEOUT = 7000;
+const SCAN_DISPLAY_TIMEOUT = 3500;
 
 const DESIGNS = {
   minimal_glow:       { Idle: MinimalGlowIdle,       Result: MinimalGlowResult },
@@ -154,7 +154,7 @@ export default function PublicScreen() {
     <div className="fixed inset-0 overflow-hidden select-none">
       <AnimatePresence mode="wait">
         {showIdle || !lastScan ? (
-          <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+          <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0">
             {/* Slideshow override */}
             {(showIdle && slideshowImages.length > 0) ? (
               <>
@@ -204,8 +204,8 @@ export default function PublicScreen() {
             )}
           </motion.div>
         ) : (
-          <motion.div key={lastScan?.id || "scan"} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }} transition={{ duration: 0.35 }} className="absolute inset-0">
+          <motion.div key={lastScan?.id || "scan"} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0">
             <Design.Result scan={lastScan} />
           </motion.div>
         )}
