@@ -86,7 +86,7 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
       date: format(new Date(), "yyyy-MM-dd"),
       start_date: membershipForm.start_date,
       use_date: membershipForm.use_date,
-      payment_method: membershipForm.payment_method || "",
+      payment_method: membershipForm.payment_method || "Efectivo",
       confirmed: membershipForm.payment_method ? true : false
     });
     const res = await base44.functions.invoke("confirmPayment", { payment_id: payment.id });
