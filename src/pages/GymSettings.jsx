@@ -118,6 +118,28 @@ export default function GymSettings() {
       </div>
 
       <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+        <h2 className="text-lg font-semibold text-white">Días Cerrados</h2>
+        <p className="text-sm text-muted-foreground">El acceso QR y manual quedará bloqueado en los días seleccionados.</p>
+        <div className="flex flex-wrap gap-2">
+          {[{ label: "Dom", value: 0 }, { label: "Lun", value: 1 }, { label: "Mar", value: 2 },
+            { label: "Mié", value: 3 }, { label: "Jue", value: 4 }, { label: "Vie", value: 5 }, { label: "Sáb", value: 6 }].map(d => {
+            const closed = (gym.closed_days || [0]).includes(d.value);
+            return (
+              <button key={d.value} onClick={() => setGym(g => {
+                const days = g.closed_days || [0];
+                return { ...g, closed_days: closed ? days.filter(x => x !== d.value) : [...days, d.value] };
+              })}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  closed ? "bg-red-500/20 border-red-500/40 text-red-400" : "bg-background border-border text-muted-foreground hover:border-white/20"
+                }`}>
+                {d.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-6 space-y-5">
         <h2 className="text-lg font-semibold text-white">Imágenes de Pantalla Pública</h2>
         <p className="text-sm text-muted-foreground">Se muestran en la pantalla pública cuando no hay actividad por más de 5 minutos.</p>
         <label className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 rounded-lg bg-secondary text-sm text-white hover:bg-secondary/70 transition-colors">

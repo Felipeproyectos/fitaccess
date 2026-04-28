@@ -39,6 +39,14 @@
         "dynamic_geometry"
       ],
       "default": "minimal_glow"
+    },
+    "closed_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "title": "D\u00edas Cerrados (0=Dom, 1=Lun, ..., 6=S\u00e1b)",
+      "default": [0]
     }
   },
   "required": [

@@ -11,9 +11,12 @@ Deno.serve(async (req) => {
 
     const normalizedRut = rut.trim().toLowerCase();
 
-    // Find client by RUT
-    const allClients = await base44.asServiceRole.entities.Client.list('-created_date', 500);
-    const client = allClients.find(c => c.rut?.trim().toLowerCase() === normalizedRut);
+    // Find client by RUT — try exact match first, then case-insensitive fallback
+    let clientsArr = await base44.asServiceRole.entities.Client.filter({ rut: rut.trim() });
+    if (!clientsArr.length) {
+      clientsArr = await base44.asServiceRole.entities.Client.filter({ rut: normalizedRut });
+    }
+    const client = clientsArr.find(c => c.rut?.trim().toLowerCase() === normalizedRut) || clientsArr[0];
 
     if (!client) {
       return Response.json({ status: 'invalid', message: 'Cliente no encontrado con ese RUT' });
@@ -28,10 +31,12 @@ Deno.serve(async (req) => {
       .filter(m => m.status === 'active' || m.status === 'expiring')
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
 
-    // Block Sundays
+    // Block configured closed days
     const dayOfWeek = now.getDay();
-    if (dayOfWeek === 0) {
-      return Response.json({ status: 'invalid', client_name: client.name, message: 'El gimnasio no abre los domingos' });
+    const gyms = await base44.asServiceRole.entities.Gym.filter({ id: client.gym_id });
+    const closedDays = gyms[0]?.closed_days ?? [0];
+    if (closedDays.includes(dayOfWeek)) {
+      return Response.json({ status: 'invalid', client_name: client.name, message: 'El gimnasio no abre este día' });
     }
 
     if (!activeMembership) {

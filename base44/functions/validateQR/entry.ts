@@ -41,10 +41,14 @@ Deno.serve(async (req) => {
     const isSinglePass = membership.type === 'single_pass';
     const isFreePass = membership.type === 'free_pass';
 
-    // Block Sundays (0 = Sunday in JS)
+    // Block configured closed days
     const dayOfWeek = new Date().getDay();
-    if (!isFreePass && !isSinglePass && dayOfWeek === 0) {
-      return Response.json({ status: 'invalid', client_name: client.name, message: 'El gimnasio no abre los domingos' });
+    if (!isFreePass && !isSinglePass) {
+      const gyms = await base44.asServiceRole.entities.Gym.filter({ id: qrCode.gym_id });
+      const closedDays = gyms[0]?.closed_days ?? [0];
+      if (closedDays.includes(dayOfWeek)) {
+        return Response.json({ status: 'invalid', client_name: client.name, message: 'El gimnasio no abre este día' });
+      }
     }
 
     // Check if already attended today
