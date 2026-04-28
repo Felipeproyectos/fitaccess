@@ -25,6 +25,7 @@ export default function Clients() {
   const [tab, setTab] = useState("active");
   const [deletingId, setDeletingId] = useState(null);
   const [membershipFilter, setMembershipFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
   useEffect(() => { loadClients(); }, []);
@@ -59,10 +60,31 @@ export default function Clients() {
       c.email?.toLowerCase().includes(search.toLowerCase()) ||
       c.phone?.includes(search);
     if (!textMatch) return false;
-    if (!membershipFilter) return true;
-    const mem = getClientMembership(c.id);
-    if (membershipFilter === "none") return !mem;
-    return mem?.plan_name?.toLowerCase() === membershipFilter.toLowerCase();
+    
+    // Filtro de membresía
+    if (membershipFilter) {
+      const mem = getClientMembership(c.id);
+      if (membershipFilter === "none") {
+        if (mem) return false;
+      } else {
+        if (!mem || mem?.plan_name?.toLowerCase() !== membershipFilter.toLowerCase()) return false;
+      }
+    }
+    
+    // Filtro de pago
+    if (paymentFilter) {
+      const mem = getClientMembership(c.id);
+      const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
+      const hasPayment = payments.some(p => p.client_id === c.id && p.confirmed);
+      
+      if (paymentFilter === "pending") {
+        if (!hasActiveMem || hasPayment) return false;
+      } else if (paymentFilter === "paid") {
+        if (!hasPayment) return false;
+      }
+    }
+    
+    return true;
   }).sort((a, b) => a.name?.localeCompare(b.name, "es"));
 
   function openEdit(client) { setEditClient(client); setShowModal(true); }
@@ -163,6 +185,15 @@ export default function Clients() {
             <option key={p.id} value={p.name}>{p.name}</option>
           ))}
           <option value="none">Sin membresía</option>
+        </select>
+        <select
+          value={paymentFilter}
+          onChange={e => setPaymentFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg bg-card border border-border text-sm text-white"
+        >
+          <option value="">Estado de pago</option>
+          <option value="paid">✓ Pagados</option>
+          <option value="pending">⚠ Pendiente de pago</option>
         </select>
         <div className="flex gap-1 bg-card border border-border rounded-lg p-1">
           <button
