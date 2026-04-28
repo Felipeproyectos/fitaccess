@@ -107,6 +107,11 @@ export default function Clients() {
     setClients(prev => prev.filter(c => c.id !== client.id));
   }
 
+  async function handleToggleActive(client) {
+    await base44.entities.Client.update(client.id, { active: !client.active });
+    setClients(prev => prev.map(c => c.id === client.id ? { ...c, active: !c.active } : c));
+  }
+
   const clientHeaders = ["Nombre Completo", "RUT", "Correo", "Número Teléfono", "Notas"];
   const clientRows = filtered.map(c => [
     toTitleCase(c.name),
@@ -232,23 +237,28 @@ export default function Clients() {
             const isExpired = mem?.status === 'expired';
             const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
             return (
-              <div key={client.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors">
+              <div key={client.id} className={`bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
-                    {client.name?.charAt(0)?.toUpperCase()}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => setViewClient(client)}>
-                      <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => openEdit(client)}>
-                      <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-red-400/10" onClick={() => handleDelete(client)} disabled={deletingId === client.id}>
-                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                    </Button>
-                  </div>
-                </div>
+                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
+                     {client.name?.charAt(0)?.toUpperCase()}
+                   </div>
+                   <div className="flex gap-1">
+                     <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => setViewClient(client)}>
+                       <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                     </Button>
+                     <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => openEdit(client)}>
+                       <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                     </Button>
+                     <Button size="icon" variant="ghost" className={`w-8 h-8 ${isInactive ? 'hover:bg-green-400/10' : 'hover:bg-red-400/10'}`} onClick={() => handleToggleActive(client)}>
+                       <span className={`text-xs font-bold ${isInactive ? 'text-green-400' : 'text-red-400'}`}>
+                         {isInactive ? '✓' : '✕'}
+                       </span>
+                     </Button>
+                     <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-red-400/10" onClick={() => handleDelete(client)} disabled={deletingId === client.id}>
+                       <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                     </Button>
+                   </div>
+                 </div>
                 <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
                 {!isInactive && hasActiveMem && (() => {
                   const hasPayment = payments.some(p => p.client_id === client.id && p.confirmed);
@@ -368,6 +378,11 @@ export default function Clients() {
                         </Button>
                         <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-white/10" onClick={() => openEdit(client)}>
                           <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className={`w-8 h-8 ${isInactive ? 'hover:bg-green-400/10' : 'hover:bg-red-400/10'}`} onClick={() => handleToggleActive(client)}>
+                          <span className={`text-xs font-bold ${isInactive ? 'text-green-400' : 'text-red-400'}`}>
+                            {isInactive ? '✓' : '✕'}
+                          </span>
                         </Button>
                         <Button size="icon" variant="ghost" className="w-8 h-8 hover:bg-red-400/10" onClick={() => handleDelete(client)} disabled={deletingId === client.id}>
                           <Trash2 className="w-3.5 h-3.5 text-red-400" />
