@@ -29,6 +29,14 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
     });
   }, []);
 
+  // Obtener el método de pago actual de un cliente (del último pago confirmado)
+  function getClientPaymentMethod(clientId) {
+    const clientPayments = payments
+      .filter(p => p.client_id === clientId && p.confirmed)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    return clientPayments[0]?.payment_method || null;
+  }
+
   // Determina si un cliente tiene membresía activa o por vencer
   function hasActiveMembership(clientId) {
     return memberships.some(m => 
@@ -37,17 +45,13 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
     );
   }
 
-  // Determina si un cliente tiene pago confirmado
-  function hasConfirmedPayment(clientId) {
-    return payments.some(p => p.client_id === clientId && p.confirmed);
-  }
-
   const filteredClients = clients.filter(c => {
-    // Solo mostrar clientes que NO tienen membresía activa Y NO tienen pago confirmado
+    // Mostrar clientes activos con membresía activa que NO tienen método de pago especificado
     const matchesSearch = c.name?.toLowerCase().includes(search.toLowerCase()) ||
       c.email?.toLowerCase().includes(search.toLowerCase());
-    const needsPaymentAction = !hasActiveMembership(c.id) && !hasConfirmedPayment(c.id);
-    return matchesSearch && needsPaymentAction;
+    const hasActiveMem = hasActiveMembership(c.id);
+    const noPaymentMethod = !getClientPaymentMethod(c.id);
+    return matchesSearch && hasActiveMem && noPaymentMethod;
   });
 
   function toggleClient(id) {
@@ -75,16 +79,21 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
     const selectedClientIds = selected.map(c => c.id);
     
     // Obtener todos los pagos confirmados de los clientes seleccionados
-    const clientPayments = payments.filter(p => selectedClientIds.includes(p.client_id));
+    const clientPayments = payments.filter(p => 
+      selectedClientIds.includes(p.client_id) && p.confirmed
+    );
     
     setProgress({ done: 0, total: clientPayments.length });
     let updated = 0, failed = 0;
 
+    const methodFormatted = selectedMethod === "efectivo" ? "Efectivo" : "Transferencia";
+
     for (const payment of clientPayments) {
       try {
-        await base44.entities.Payment.update(payment.id, { payment_method: selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1) });
+        await base44.entities.Payment.update(payment.id, { payment_method: methodFormatted });
         updated++;
-      } catch {
+      } catch (error) {
+        console.error("Error updating payment:", error);
         failed++;
       }
       setProgress(p => ({ ...p, done: p.done + 1 }));
@@ -134,10 +143,8 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
                   <span className="text-xs text-muted-foreground font-medium">Seleccionar todos ({filteredClients.length})</span>
                 </div>
                 {filteredClients.map(c => {
-                  const clientPayments = payments.filter(p => p.client_id === c.id && p.confirmed);
-                  const lastPayment = clientPayments.sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
-                  const method = lastPayment?.payment_method;
-                  return (
+                   const method = getClientPaymentMethod(c.id);
+                   return (
                     <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-0 cursor-pointer hover:bg-white/5"
                       onClick={() => toggleClient(c.id)}>
                       <input type="checkbox" readOnly checked={selectedIds.has(c.id)} className="accent-red-500" />
