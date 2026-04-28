@@ -77,45 +77,51 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     setCreatingMembership(true);
     setMembershipResult(null);
     
-    const planIsFreePass = selectedPlan.type === "free_pass";
-    const planIsSinglePass = selectedPlan.type === "single_pass";
-    
-    let startDate = membershipForm.start_date;
-    if (!startDate && !planIsFreePass && !planIsSinglePass) {
-      startDate = format(new Date(), "yyyy-MM-dd");
+    try {
+      const planIsFreePass = selectedPlan.type === "free_pass";
+      const planIsSinglePass = selectedPlan.type === "single_pass";
+      
+      let startDate = membershipForm.start_date;
+      if (!startDate && !planIsFreePass && !planIsSinglePass) {
+        startDate = format(new Date(), "yyyy-MM-dd");
+      }
+      
+      const paymentData = {
+        client_id: client.id,
+        client_name: client.name,
+        gym_id: client.gym_id || "default",
+        plan_id: selectedPlan.id,
+        plan_name: selectedPlan.name,
+        amount: selectedPlan.price,
+        date: format(new Date(), "yyyy-MM-dd"),
+        payment_method: membershipForm.payment_method || "Efectivo",
+        confirmed: membershipForm.payment_method ? true : false
+      };
+      
+      if (planIsFreePass) {
+        paymentData.use_date = membershipForm.use_date;
+        paymentData.start_date = membershipForm.use_date || format(new Date(), "yyyy-MM-dd");
+      } else {
+        paymentData.start_date = startDate || format(new Date(), "yyyy-MM-dd");
+      }
+      
+      const payment = await base44.entities.Payment.create(paymentData);
+      const res = await base44.functions.invoke("confirmPayment", { payment_id: payment.id });
+      setMembershipResult(res.data);
+      const [mems, qrs, pays] = await Promise.all([
+        base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
+        base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
+        base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
+      ]);
+      setMemberships(mems);
+      setQrCodes(qrs);
+      setPayments(pays);
+    } catch (error) {
+      console.error("Error creating membership:", error);
+      setMembershipResult({ success: false, error: error.message });
+    } finally {
+      setCreatingMembership(false);
     }
-    
-    const paymentData = {
-      client_id: client.id,
-      client_name: client.name,
-      gym_id: client.gym_id || "default",
-      plan_id: selectedPlan.id,
-      plan_name: selectedPlan.name,
-      amount: selectedPlan.price,
-      date: format(new Date(), "yyyy-MM-dd"),
-      payment_method: membershipForm.payment_method || "Efectivo",
-      confirmed: membershipForm.payment_method ? true : false
-    };
-    
-    if (planIsFreePass) {
-      paymentData.use_date = membershipForm.use_date;
-      paymentData.start_date = membershipForm.use_date || format(new Date(), "yyyy-MM-dd");
-    } else {
-      paymentData.start_date = startDate || format(new Date(), "yyyy-MM-dd");
-    }
-    
-    const payment = await base44.entities.Payment.create(paymentData);
-    const res = await base44.functions.invoke("confirmPayment", { payment_id: payment.id });
-    setMembershipResult(res.data);
-    setCreatingMembership(false);
-    const [mems, qrs, pays] = await Promise.all([
-      base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
-      base44.entities.QRCode.filter({ client_id: client.id, active: true }, "-created_date", 1),
-      base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
-    ]);
-    setMemberships(mems);
-    setQrCodes(qrs);
-    setPayments(pays);
   }
 
   async function saveMembershipEdit() {
