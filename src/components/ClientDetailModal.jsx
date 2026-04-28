@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle, CreditCard } from "lucide-react";
+import { X, Edit2, Mail, Phone, Calendar, Plus, Loader2, AlertTriangle, CreditCard, Save } from "lucide-react";
 import { toTitleCase } from "@/utils";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   const [membershipResult, setMembershipResult] = useState(null);
   const [showCard, setShowCard] = useState(false);
   const [gym, setGym] = useState(null);
+  const [editingMembership, setEditingMembership] = useState(false);
+  const [membershipEdit, setMembershipEdit] = useState({});
+  const [savingMembership, setSavingMembership] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -74,6 +77,15 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
     setQrCodes(qrs);
   }
 
+  async function saveMembershipEdit() {
+    setSavingMembership(true);
+    await base44.entities.Membership.update(activeMembership.id, membershipEdit);
+    const mems = await base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5);
+    setMemberships(mems);
+    setEditingMembership(false);
+    setSavingMembership(false);
+  }
+
   const statusColors = {
     active: "bg-green-400/20 text-green-400",
     expiring: "bg-orange-400/20 text-orange-400",
@@ -121,9 +133,15 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
           </div>
         </div>
 
-        {activeMembership && (
+        {activeMembership && !editingMembership && (
           <div className="bg-background rounded-xl p-4 border border-border space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Membresía Activa</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Membresía Activa</p>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground hover:text-white gap-1"
+                onClick={() => { setMembershipEdit({ plan_name: activeMembership.plan_name, plan_id: activeMembership.plan_id, start_date: activeMembership.start_date, end_date: activeMembership.end_date, status: activeMembership.status, remaining_accesses: activeMembership.remaining_accesses }); setEditingMembership(true); }}>
+                <Edit2 className="w-3 h-3" /> Editar
+              </Button>
+            </div>
             <div className="flex items-center justify-between">
               <p className="font-semibold text-white">{activeMembership.plan_name}</p>
               <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[activeMembership.status]}`}>
@@ -135,6 +153,63 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
               {activeMembership.remaining_accesses !== undefined && (
                 <span>{activeMembership.remaining_accesses} accesos</span>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeMembership && editingMembership && (
+          <div className="bg-background rounded-xl p-4 border border-primary/40 space-y-3">
+            <p className="text-xs text-primary uppercase tracking-wider font-medium">Editar Membresía</p>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Plan</label>
+              <select value={membershipEdit.plan_id || ""}
+                onChange={e => {
+                  const p = plans.find(x => x.id === e.target.value);
+                  setMembershipEdit(f => ({ ...f, plan_id: e.target.value, plan_name: p?.name || f.plan_name }));
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-card border border-border text-white text-sm">
+                <option value="">— Sin cambiar plan —</option>
+                {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Fecha Inicio</label>
+                <Input type="date" value={membershipEdit.start_date || ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, start_date: e.target.value }))}
+                  className="bg-card border-border text-white" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Fecha Fin</label>
+                <Input type="date" value={membershipEdit.end_date || ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, end_date: e.target.value }))}
+                  className="bg-card border-border text-white" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Estado</label>
+                <select value={membershipEdit.status || ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, status: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg bg-card border border-border text-white text-sm">
+                  <option value="active">Activa</option>
+                  <option value="expiring">Por Vencer</option>
+                  <option value="expired">Expirada</option>
+                  <option value="pending">Pendiente</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Accesos Restantes</label>
+                <Input type="number" value={membershipEdit.remaining_accesses ?? ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, remaining_accesses: e.target.value === "" ? undefined : parseInt(e.target.value) }))}
+                  placeholder="—" className="bg-card border-border text-white" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" className="flex-1" onClick={() => setEditingMembership(false)}>Cancelar</Button>
+              <Button size="sm" className="flex-1 bg-primary hover:bg-primary/90 gap-1" onClick={saveMembershipEdit} disabled={savingMembership}>
+                {savingMembership ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Guardar
+              </Button>
             </div>
           </div>
         )}
