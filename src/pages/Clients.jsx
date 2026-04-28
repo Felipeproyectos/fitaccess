@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, Search, Edit2, Eye, Phone, Mail, Trash2, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
@@ -28,6 +28,9 @@ export default function Clients() {
   const [paymentFilter, setPaymentFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
+  const debounceRef = useRef(null);
+  const initialLoadDone = useRef(false);
+
   // Mantener viewClient sincronizado con datos frescos
   useEffect(() => {
     if (viewClient) {
@@ -38,17 +41,25 @@ export default function Clients() {
     }
   }, [clients]);
 
-  useEffect(() => {
-    loadClients();
-    // Suscripciones en tiempo real para sincronizar datos
-    const unsub1 = base44.entities.Payment.subscribe(() => loadClients());
-    const unsub2 = base44.entities.Membership.subscribe(() => loadClients());
-    const unsub3 = base44.entities.Client.subscribe(() => loadClients());
-    return () => { unsub1(); unsub2(); unsub3(); };
+  // Recarga con debounce para evitar múltiples llamadas simultáneas por suscripciones
+  const debouncedReload = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => loadClients(false), 300);
   }, []);
 
-  async function loadClients() {
-    setLoading(true);
+  useEffect(() => {
+    loadClients(true);
+    const unsub1 = base44.entities.Payment.subscribe(debouncedReload);
+    const unsub2 = base44.entities.Membership.subscribe(debouncedReload);
+    const unsub3 = base44.entities.Client.subscribe(debouncedReload);
+    return () => {
+      unsub1(); unsub2(); unsub3();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  async function loadClients(showLoading = true) {
+    if (showLoading && !initialLoadDone.current) setLoading(true);
     try {
       const [data, mems, ps, pays] = await Promise.all([
         base44.entities.Client.list("-created_date", 100),
@@ -60,12 +71,9 @@ export default function Clients() {
       setMemberships(mems);
       setPlans(ps);
       setPayments(pays);
+      initialLoadDone.current = true;
     } catch (error) {
       console.error("Error loading clients data:", error);
-      setClients([]);
-      setMemberships([]);
-      setPlans([]);
-      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -427,13 +435,13 @@ export default function Clients() {
           client={editClient}
           hasActiveMembership={editClient ? memberships.some(m => m.client_id === editClient.id && (m.status === "active" || m.status === "expiring")) : true}
           onClose={() => setShowModal(false)}
-          onSaved={() => { setShowModal(false); loadClients(); }}
+          onSaved={() => { setShowModal(false); loadClients(false); }}
         />
       )}
       {viewClient && (
         <ClientDetailModal
           client={viewClient}
-          onClose={() => { setViewClient(null); loadClients(); }}
+          onClose={() => { setViewClient(null); loadClients(false); }}
           onEdit={() => { openEdit(viewClient); setViewClient(null); }}
         />
       )}
@@ -441,7 +449,7 @@ export default function Clients() {
         <BulkImportModal
           gymId="default"
           onClose={() => setShowBulkImport(false)}
-          onImported={() => { setShowBulkImport(false); loadClients(); }}
+          onImported={() => { setShowBulkImport(false); loadClients(false); }}
         />
       )}
     </div>
