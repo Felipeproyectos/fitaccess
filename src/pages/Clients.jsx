@@ -190,10 +190,11 @@ export default function Clients() {
               <div className="mt-3 space-y-1.5">
                 {(() => {
                   const mem = getClientMembership(client.id);
-                  const isExpired = mem && (mem.status === 'expired' || (mem.remaining_accesses !== undefined && mem.remaining_accesses <= 0));
+                  const isExpired = mem?.status === 'expired';
+                  const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
                   return (
                     <>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : client.active !== false ? 'bg-green-400/20 text-green-400' : 'bg-red-400/20 text-red-400'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : hasActiveMem ? 'bg-green-400/20 text-green-400' : client.active !== false ? 'bg-green-400/20 text-green-400' : 'bg-red-400/20 text-red-400'}`}>
                         {isExpired ? 'Vencido' : client.active !== false ? 'Activo' : 'Inactivo'}
                       </span>
                       {mem ? (
