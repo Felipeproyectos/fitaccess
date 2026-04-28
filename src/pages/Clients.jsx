@@ -305,19 +305,21 @@ export default function Clients() {
                   </div>
                 )}
                 <div className="mt-3 space-y-1.5">
-                  {isInactive ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-400/20 text-red-400">Inactivo</span>
-                  ) : (
-                    <>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : 'bg-green-400/20 text-green-400'}`}>
-                        {isExpired ? 'Vencido' : 'Activo'}
-                      </span>
-                      <p className="text-xs text-muted-foreground">
-                        {mem ? `${mem.plan_name}${mem.end_date ? ` · vence ${mem.end_date}` : ''}` : 'Sin membresía'}
-                      </p>
-                    </>
-                  )}
-                </div>
+                   {isInactive ? (
+                     <span className="text-xs px-2 py-0.5 rounded-full bg-red-400/20 text-red-400">Inactivo</span>
+                   ) : !mem ? (
+                     <span className="text-xs px-2 py-0.5 rounded-full bg-red-400/20 text-red-400">Usuario sin membresía</span>
+                   ) : (
+                     <>
+                       <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : 'bg-green-400/20 text-green-400'}`}>
+                         {isExpired ? 'Vencido' : 'Activo'}
+                       </span>
+                       <p className="text-xs text-muted-foreground">
+                         {mem.plan_name}{mem.end_date ? ` · vence ${mem.end_date}` : ''}
+                       </p>
+                     </>
+                   )}
+                 </div>
               </div>
             );
           })}
@@ -353,15 +355,17 @@ export default function Clients() {
                           {client.name?.charAt(0)?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white">{toTitleCase(client.name)}</p>
-                          {isInactive ? (
-                            <span className="text-xs text-red-400">Inactivo</span>
-                          ) : isExpired ? (
-                            <span className="text-xs text-red-400">Vencido</span>
-                          ) : (
-                            <span className="text-xs text-green-400">Activo</span>
-                          )}
-                        </div>
+                           <p className="font-medium text-white">{toTitleCase(client.name)}</p>
+                           {isInactive ? (
+                             <span className="text-xs text-red-400">Inactivo</span>
+                           ) : !mem ? (
+                             <span className="text-xs text-red-400">Sin membresía</span>
+                           ) : isExpired ? (
+                             <span className="text-xs text-red-400">Vencido</span>
+                           ) : (
+                             <span className="text-xs text-green-400">Activo</span>
+                           )}
+                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
