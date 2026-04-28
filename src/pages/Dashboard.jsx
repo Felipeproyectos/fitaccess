@@ -31,8 +31,20 @@ export default function Dashboard() {
 
     const clientMap = Object.fromEntries(allClients.map(c => [c.id, c]));
 
+    // Count unique clients with active memberships
     const activeMemberships = memberships.filter(m => m.status === "active" || m.status === "expiring");
-    const expiring = memberships.filter(m => m.status === "expiring");
+    const uniqueActiveClientIds = new Set(activeMemberships.map(m => m.client_id));
+    const activeClientsCount = uniqueActiveClientIds.size;
+
+    // Get expiring memberships (one per client, prefer earliest expiring)
+    const expiringByClient = {};
+    memberships.filter(m => m.status === "expiring").forEach(m => {
+      if (!expiringByClient[m.client_id] || (m.end_date && expiringByClient[m.client_id].end_date && m.end_date < expiringByClient[m.client_id].end_date)) {
+        expiringByClient[m.client_id] = m;
+      }
+    });
+    const expiring = Object.values(expiringByClient);
+
     const pendingPayments = allPayments.filter(p => !p.confirmed);
     const confirmedPayments = allPayments.filter(p => p.confirmed);
     const monthPayments = confirmedPayments.filter(p => p.date >= monthStart);
@@ -45,7 +57,7 @@ export default function Dashboard() {
 
     setStats({
       todayAttendance: attendances.length,
-      activeClients: activeMemberships.length,
+      activeClients: activeClientsCount,
       expiringClients: expiring.length,
       pendingPayments: pendingPayments.length
     });

@@ -78,22 +78,25 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
     const selected = clients.filter(c => selectedIds.has(c.id));
     const selectedClientIds = selected.map(c => c.id);
     
-    // Obtener todos los pagos confirmados de los clientes seleccionados
-    const clientPayments = payments.filter(p => 
-      selectedClientIds.includes(p.client_id) && p.confirmed
-    );
-    
-    setProgress({ done: 0, total: clientPayments.length });
+    setProgress({ done: 0, total: selected.length });
     let updated = 0, failed = 0;
 
-    const methodFormatted = selectedMethod === "efectivo" ? "Efectivo" : "Transferencia";
+    const methodFormatted = selectedMethod === "efectivo" ? "efectivo" : "transferencia";
 
-    for (const payment of clientPayments) {
+    for (const client of selected) {
       try {
-        await base44.entities.Payment.update(payment.id, { payment_method: methodFormatted });
+        // Update client's preferred payment method
+        await base44.entities.Client.update(client.id, { preferred_payment_method: methodFormatted });
+
+        // Update all confirmed payments for this client
+        const clientPayments = payments.filter(p => p.client_id === client.id && p.confirmed);
+        for (const payment of clientPayments) {
+          const paymentMethod = selectedMethod === "efectivo" ? "Efectivo" : "Transferencia";
+          await base44.entities.Payment.update(payment.id, { payment_method: paymentMethod });
+        }
         updated++;
       } catch (error) {
-        console.error("Error updating payment:", error);
+        console.error("Error updating client:", error);
         failed++;
       }
       setProgress(p => ({ ...p, done: p.done + 1 }));
