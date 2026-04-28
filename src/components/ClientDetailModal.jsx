@@ -101,8 +101,26 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
   async function saveMembershipEdit() {
     setSavingMembership(true);
     await base44.entities.Membership.update(activeMembership.id, membershipEdit);
-    const mems = await base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5);
+
+    // Actualizar o crear el pago si se cambió el tipo de pago o estado
+    if (membershipEdit.payment_method || membershipEdit.payment_status !== undefined) {
+      const existingPayment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+      if (existingPayment) {
+        const updateData = {};
+        if (membershipEdit.payment_method) updateData.payment_method = membershipEdit.payment_method;
+        if (membershipEdit.payment_status !== undefined) updateData.confirmed = membershipEdit.payment_status === 'paid';
+        if (Object.keys(updateData).length > 0) {
+          await base44.entities.Payment.update(existingPayment.id, updateData);
+        }
+      }
+    }
+
+    const [mems, pays] = await Promise.all([
+      base44.entities.Membership.filter({ client_id: client.id }, "-created_date", 5),
+      base44.entities.Payment.filter({ client_id: client.id }, "-created_date", 50)
+    ]);
     setMemberships(mems);
+    setPayments(pays);
     setEditingMembership(false);
     setSavingMembership(false);
   }
@@ -175,7 +193,20 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Membresía Activa</p>
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground hover:text-white gap-1"
-                onClick={() => { setMembershipEdit({ plan_name: activeMembership.plan_name, plan_id: activeMembership.plan_id, start_date: activeMembership.start_date, end_date: activeMembership.end_date, status: activeMembership.status, remaining_accesses: activeMembership.remaining_accesses }); setEditingMembership(true); }}>
+                onClick={() => {
+                  const payment = payments.find(p => p.plan_id === activeMembership.plan_id && p.client_id === client.id);
+                  setMembershipEdit({
+                    plan_name: activeMembership.plan_name,
+                    plan_id: activeMembership.plan_id,
+                    start_date: activeMembership.start_date,
+                    end_date: activeMembership.end_date,
+                    status: activeMembership.status,
+                    remaining_accesses: activeMembership.remaining_accesses,
+                    payment_method: payment?.payment_method || "",
+                    payment_status: payment?.confirmed ? "paid" : "pending"
+                  });
+                  setEditingMembership(true);
+                }}>
                 <Edit2 className="w-3 h-3" /> Editar
               </Button>
             </div>
@@ -249,6 +280,29 @@ export default function ClientDetailModal({ client, onClose, onEdit }) {
                 <Input type="number" value={membershipEdit.remaining_accesses ?? ""}
                   onChange={e => setMembershipEdit(f => ({ ...f, remaining_accesses: e.target.value === "" ? undefined : parseInt(e.target.value) }))}
                   placeholder="—" className="bg-card border-border text-white" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Tipo de Pago</label>
+                <select value={membershipEdit.payment_method || ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, payment_method: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg bg-card border border-border text-white text-sm">
+                  <option value="">— Sin especificar —</option>
+                  <option value="Efectivo">💵 Efectivo</option>
+                  <option value="Transferencia">🏦 Transferencia</option>
+                  <option value="Tarjeta de Débito">💳 Tarjeta de Débito</option>
+                  <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Estado de Pago</label>
+                <select value={membershipEdit.payment_status ?? ""}
+                  onChange={e => setMembershipEdit(f => ({ ...f, payment_status: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg bg-card border border-border text-white text-sm">
+                  <option value="paid">✓ Pagado</option>
+                  <option value="pending">⚠ Pendiente</option>
+                </select>
               </div>
             </div>
             <div className="flex gap-2">
