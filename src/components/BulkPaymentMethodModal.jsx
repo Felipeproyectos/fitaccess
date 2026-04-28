@@ -9,6 +9,7 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   const [step, setStep] = useState(1);
   const [clients, setClients] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [memberships, setMemberships] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [search, setSearch] = useState("");
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -19,17 +20,35 @@ export default function BulkPaymentMethodModal({ onClose, onSaved }) {
   useEffect(() => {
     Promise.all([
       base44.entities.Client.filter({ active: true }, "-created_date", 200),
-      base44.entities.Payment.list("-created_date", 500)
-    ]).then(([cl, pays]) => {
+      base44.entities.Payment.list("-created_date", 500),
+      base44.entities.Membership.list("-created_date", 500)
+    ]).then(([cl, pays, mems]) => {
       setClients(cl);
       setPayments(pays);
+      setMemberships(mems);
     });
   }, []);
 
-  const filteredClients = clients.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Determina si un cliente tiene membresía activa o por vencer
+  function hasActiveMembership(clientId) {
+    return memberships.some(m => 
+      m.client_id === clientId && 
+      (m.status === "active" || m.status === "expiring")
+    );
+  }
+
+  // Determina si un cliente tiene pago confirmado
+  function hasConfirmedPayment(clientId) {
+    return payments.some(p => p.client_id === clientId && p.confirmed);
+  }
+
+  const filteredClients = clients.filter(c => {
+    // Solo mostrar clientes que NO tienen membresía activa Y NO tienen pago confirmado
+    const matchesSearch = c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase());
+    const needsPaymentAction = !hasActiveMembership(c.id) && !hasConfirmedPayment(c.id);
+    return matchesSearch && needsPaymentAction;
+  });
 
   function toggleClient(id) {
     setSelectedIds(prev => {
