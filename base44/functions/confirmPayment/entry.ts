@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function generateToken() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       price: plan.price
     });
 
-    // Generate QR token and confirm payment in parallel
+    // Generate QR token, confirm payment, and activate client in parallel
     const token = generateToken();
     const [qrCode] = await Promise.all([
       base44.asServiceRole.entities.QRCode.create({
@@ -98,7 +98,8 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.Payment.update(payment_id, {
         confirmed: true,
         confirmed_date: new Date().toISOString().split('T')[0]
-      })
+      }),
+      base44.asServiceRole.entities.Client.update(client.id, { active: true })
     ]);
 
     // Send email fire-and-forget (non-blocking)

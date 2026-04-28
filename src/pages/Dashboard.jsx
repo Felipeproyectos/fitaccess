@@ -16,6 +16,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    const unsub1 = base44.entities.Payment.subscribe(() => loadData());
+    const unsub2 = base44.entities.Membership.subscribe(() => loadData());
+    const unsub3 = base44.entities.Attendance.subscribe(() => loadData());
+    const unsub4 = base44.entities.Client.subscribe(() => loadData());
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, []);
 
   async function loadData() {

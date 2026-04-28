@@ -28,7 +28,14 @@ export default function Clients() {
   const [paymentFilter, setPaymentFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
-  useEffect(() => { loadClients(); }, []);
+  useEffect(() => {
+    loadClients();
+    // Suscripciones en tiempo real para sincronizar datos
+    const unsub1 = base44.entities.Payment.subscribe(() => loadClients());
+    const unsub2 = base44.entities.Membership.subscribe(() => loadClients());
+    const unsub3 = base44.entities.Client.subscribe(() => loadClients());
+    return () => { unsub1(); unsub2(); unsub3(); };
+  }, []);
 
   async function loadClients() {
     setLoading(true);

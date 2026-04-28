@@ -47,7 +47,12 @@ export default function Payments() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+    const unsub1 = base44.entities.Payment.subscribe(() => loadData());
+    const unsub2 = base44.entities.Membership.subscribe(() => loadData());
+    return () => { unsub1(); unsub2(); };
+  }, []);
 
   async function loadData() {
     setLoading(true);
