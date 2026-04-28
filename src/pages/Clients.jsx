@@ -196,13 +196,13 @@ export default function Clients() {
                 </div>
               </div>
               <h3 className="font-semibold text-white">{toTitleCase(client.name)}</h3>
-              {(!client.preferred_payment_method || client.preferred_payment_method === "no_especificado") && (
+              {client.active !== false && (!client.preferred_payment_method || client.preferred_payment_method === "no_especificado") && (
                 <div className="flex items-center gap-1 mt-1">
                   <AlertTriangle className="w-3 h-3 text-orange-400" />
                   <span className="text-xs text-orange-400">Sin método de pago</span>
                 </div>
               )}
-              {client.preferred_payment_method && client.preferred_payment_method !== "no_especificado" && (
+              {client.active !== false && client.preferred_payment_method && client.preferred_payment_method !== "no_especificado" && (
                 <span className="text-xs text-muted-foreground mt-0.5 block">
                   {client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}
                 </span>
@@ -221,13 +221,19 @@ export default function Clients() {
               )}
               <div className="mt-3 space-y-1.5">
                 {(() => {
+                  const isInactive = client.active === false;
+                  if (isInactive) {
+                    return (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-400/20 text-red-400">Inactivo</span>
+                    );
+                  }
                   const mem = getClientMembership(client.id);
                   const isExpired = mem?.status === 'expired';
                   const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
                   return (
                     <>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : hasActiveMem ? 'bg-green-400/20 text-green-400' : client.active !== false ? 'bg-green-400/20 text-green-400' : 'bg-red-400/20 text-red-400'}`}>
-                        {isExpired ? 'Vencido' : client.active !== false ? 'Activo' : 'Inactivo'}
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : hasActiveMem ? 'bg-green-400/20 text-green-400' : 'bg-green-400/20 text-green-400'}`}>
+                        {isExpired ? 'Vencido' : 'Activo'}
                       </span>
                       {mem ? (
                         <p className="text-xs text-muted-foreground">
