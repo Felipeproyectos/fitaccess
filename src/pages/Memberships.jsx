@@ -12,6 +12,8 @@ export default function Memberships() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editPlan, setEditPlan] = useState(null);
+  const [editingPaymentClientId, setEditingPaymentClientId] = useState(null);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -28,6 +30,14 @@ export default function Memberships() {
   }
 
   async function loadPlans() { loadData(); }
+
+  async function savePaymentMethod(clientId, method) {
+    setSavingPayment(true);
+    await base44.entities.Client.update(clientId, { preferred_payment_method: method });
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, preferred_payment_method: method } : c));
+    setEditingPaymentClientId(null);
+    setSavingPayment(false);
+  }
 
   async function deletePlan(id) {
     if (!confirm("¿Eliminar este plan?")) return;
@@ -113,10 +123,33 @@ export default function Memberships() {
                       <td className="px-4 py-3 text-muted-foreground">{mem.plan_name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{mem.end_date || "—"}</td>
                       <td className="px-4 py-3">
-                        {noPayment
-                          ? <span className="text-xs text-orange-400 font-medium">Sin especificar</span>
-                          : <span className="text-xs text-muted-foreground">{client?.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
-                        }
+                        {noPayment ? (
+                          editingPaymentClientId === mem.client_id ? (
+                            <div className="flex items-center gap-1">
+                              <select
+                                autoFocus
+                                className="text-xs bg-background border border-orange-400/60 text-white rounded px-2 py-1"
+                                defaultValue=""
+                                disabled={savingPayment}
+                                onChange={e => e.target.value && savePaymentMethod(mem.client_id, e.target.value)}
+                              >
+                                <option value="" disabled>Seleccionar...</option>
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="transferencia">🏦 Transferencia</option>
+                              </select>
+                              <button onClick={() => setEditingPaymentClientId(null)} className="text-muted-foreground hover:text-white text-xs ml-1">✕</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setEditingPaymentClientId(mem.client_id)}
+                              className="text-xs text-orange-400 font-medium hover:underline hover:text-orange-300 transition-colors"
+                            >
+                              Sin especificar →
+                            </button>
+                          )
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{client?.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
+                        )}
                       </td>
                     </tr>
                   );
