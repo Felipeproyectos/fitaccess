@@ -111,19 +111,21 @@ export default function Memberships() {
               <tbody>
                 {memberships.map((mem, i) => {
                   const client = clients.find(c => c.id === mem.client_id);
-                  const noPayment = !client?.preferred_payment_method || client?.preferred_payment_method === "no_especificado";
+                  const noPayment = client && (!client.preferred_payment_method || client.preferred_payment_method === "no_especificado");
                   return (
                     <tr key={mem.id} className={`border-b border-border last:border-0 ${noPayment ? "bg-orange-400/5" : ""}`}>
                       <td className="px-4 py-3 text-white font-medium">
                         <div className="flex items-center gap-2">
                           {noPayment && <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
-                          {client?.name || mem.client_id}
+                          {client ? client.name : <span className="text-muted-foreground text-xs italic">Cliente eliminado</span>}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{mem.plan_name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{mem.end_date || "—"}</td>
                       <td className="px-4 py-3">
-                        {noPayment ? (
+                        {!client ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : noPayment ? (
                           editingPaymentClientId === mem.client_id ? (
                             <div className="flex items-center gap-1">
                               <select
@@ -148,7 +150,7 @@ export default function Memberships() {
                             </button>
                           )
                         ) : (
-                          <span className="text-xs text-muted-foreground">{client?.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
+                          <span className="text-xs text-muted-foreground">{client.preferred_payment_method === "efectivo" ? "💵 Efectivo" : "🏦 Transferencia"}</span>
                         )}
                       </td>
                     </tr>
