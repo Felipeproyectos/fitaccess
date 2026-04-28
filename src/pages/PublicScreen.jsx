@@ -9,7 +9,7 @@ import {
 } from "@/components/PublicScreenDesigns";
 
 const IDLE_TIMEOUT = 5 * 60 * 1000;
-const SCAN_DISPLAY_TIMEOUT = 3500;
+const SCAN_DISPLAY_TIMEOUT = 2500;
 
 const DESIGNS = {
   minimal_glow:       { Idle: MinimalGlowIdle,       Result: MinimalGlowResult },
@@ -86,7 +86,7 @@ export default function PublicScreen() {
             processLocalScan(token);
           }
           scanBuffer.current = "";
-        }, 300);
+        }, 150);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
