@@ -28,6 +28,16 @@ export default function Clients() {
   const [paymentFilter, setPaymentFilter] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
+  // Mantener viewClient sincronizado con datos frescos
+  useEffect(() => {
+    if (viewClient) {
+      const updated = clients.find(c => c.id === viewClient.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(viewClient)) {
+        setViewClient(updated);
+      }
+    }
+  }, [clients]);
+
   useEffect(() => {
     loadClients();
     // Suscripciones en tiempo real para sincronizar datos
