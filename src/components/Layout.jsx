@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor, Trophy } from "lucide-react";
 import { useState } from "react";
 
 const nav = [
@@ -9,6 +9,7 @@ const nav = [
   { path: "/payments", label: "Pagos", icon: CreditCard },
   { path: "/scanner", label: "Validar QR", icon: QrCode },
   { path: "/attendance", label: "Asistencias", icon: Activity },
+  { path: "/achievements", label: "Logros", icon: Trophy },
   { path: "/settings", label: "Configuración", icon: Settings },
 ];
 
