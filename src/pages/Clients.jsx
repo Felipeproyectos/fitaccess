@@ -83,10 +83,10 @@ export default function Clients() {
   function getClientMembership(clientId) {
     const mem = memberships.find(m => m.client_id === clientId && (m.status === 'active' || m.status === 'expiring' || m.status === 'expired'));
     if (mem) {
-      if (typeof mem.accesos_restantes === 'number') {
-        if (mem.accesos_restantes <= 0) {
+      if (typeof mem.remaining_accesses === 'number') {
+        if (mem.remaining_accesses <= 0) {
           return { ...mem, status: 'expired' };
-        } else if (mem.accesos_restantes <= 3) {
+        } else if (mem.remaining_accesses <= 3) {
           return { ...mem, status: 'expiring' };
         } else {
           return { ...mem, status: 'active' };
@@ -335,7 +335,7 @@ export default function Clients() {
                        </p>
                        {isExpiring && (
                          <p className="text-xs text-yellow-400 flex items-center gap-1 mt-1">
-                           <span>⚠</span> Membresía por caducar: {mem.accesos_restantes} acceso{mem.accesos_restantes === 1 ? '' : 's'} restante{mem.accesos_restantes === 1 ? '' : 's'}
+                           <span>⚠</span> Membresía por caducar: {mem.remaining_accesses} acceso{mem.remaining_accesses === 1 ? '' : 's'} restante{mem.remaining_accesses === 1 ? '' : 's'}
                          </p>
                        )}
                      </>
