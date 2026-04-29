@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ClientModal from "@/components/ClientModal";
 import ClientDetailModal from "@/components/ClientDetailModal";
+import PullToRefresh from "@/components/PullToRefresh";
 
 
 
@@ -169,8 +170,8 @@ export default function Clients() {
   );
 
   return (
+    <PullToRefresh onRefresh={() => loadClients(false)}>
     <div className="p-6 space-y-6">
-
 
       <div className="flex items-center justify-between">
         <div>
@@ -453,5 +454,6 @@ export default function Clients() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 }

@@ -35,10 +35,19 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: none;
   }
 }
 

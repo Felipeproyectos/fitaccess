@@ -1,6 +1,7 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor, Trophy } from "lucide-react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor, Trophy, ChevronLeft } from "lucide-react";
 import { useState } from "react";
+import BottomNavigationBar from "@/components/BottomNavigationBar";
 
 const nav = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -12,6 +13,33 @@ const nav = [
   { path: "/achievements", label: "Logros", icon: Trophy },
   { path: "/settings", label: "Configuración", icon: Settings },
 ];
+
+function MobileHeader({ onMenuOpen }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isRoot = location.pathname === "/";
+
+  return (
+    <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      {isRoot ? (
+        <button onClick={onMenuOpen} className="text-muted-foreground hover:text-white">
+          <Menu className="w-5 h-5" />
+        </button>
+      ) : (
+        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-white">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+      <span className="font-display text-lg text-gradient tracking-wider">FITACCESS</span>
+      {!isRoot && (
+        <button onClick={onMenuOpen} className="ml-auto text-muted-foreground hover:text-white">
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function Layout() {
   const location = useLocation();
@@ -85,15 +113,11 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center gap-4 px-4 py-3 border-b border-border bg-card">
-          <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-white">
-            <Menu className="w-5 h-5" />
-          </button>
-          <span className="font-display text-lg text-gradient tracking-wider">FITACCESS</span>
-        </div>
-        <main className="flex-1 overflow-y-auto">
+        <MobileHeader onMenuOpen={() => setSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0" style={{ overscrollBehavior: 'none' }}>
           <Outlet />
         </main>
+        <BottomNavigationBar />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Save, Upload, Trash2 } from "lucide-react";
+import AccountDeletion from "@/components/AccountDeletion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,6 +145,8 @@ export default function GymSettings() {
       <Button onClick={save} disabled={saving} className="bg-primary hover:bg-primary/90 glow-red text-white gap-2">
         <Save className="w-4 h-4" /> {saving ? "Guardando..." : "Guardar Cambios"}
       </Button>
+
+      <AccountDeletion />
     </div>
   );
 }

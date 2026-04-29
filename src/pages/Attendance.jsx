@@ -5,6 +5,7 @@ import { Search, Calendar, Trash2 } from "lucide-react";
 import ExportMenu from "@/components/ExportMenu";
 import { format, startOfMonth } from "date-fns";
 import { Input } from "@/components/ui/input";
+import PullToRefresh from "@/components/PullToRefresh";
 
 export default function Attendance() {
   const [attendances, setAttendances] = useState([]);
@@ -78,6 +79,7 @@ export default function Attendance() {
   ];
 
   return (
+    <PullToRefresh onRefresh={loadAttendances}>
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between">
         <div>
@@ -155,5 +157,6 @@ export default function Attendance() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }
