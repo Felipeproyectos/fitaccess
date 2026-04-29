@@ -81,8 +81,19 @@ export default function Clients() {
   }
 
   function getClientMembership(clientId) {
-    const active = memberships.find(m => m.client_id === clientId && (m.status === 'active' || m.status === 'expiring'));
-    if (active) return active;
+    const mem = memberships.find(m => m.client_id === clientId && (m.status === 'active' || m.status === 'expiring' || m.status === 'expired'));
+    if (mem) {
+      if (typeof mem.accesos_restantes === 'number') {
+        if (mem.accesos_restantes <= 0) {
+          return { ...mem, status: 'expired' };
+        } else if (mem.accesos_restantes <= 3) {
+          return { ...mem, status: 'expiring' };
+        } else {
+          return { ...mem, status: 'active' };
+        }
+      }
+      return mem;
+    }
     return memberships.find(m => m.client_id === clientId);
   }
 
@@ -261,6 +272,7 @@ export default function Clients() {
             const mem = getClientMembership(client.id);
             const isInactive = client.active === false;
             const isExpired = mem?.status === 'expired';
+            const isExpiring = mem?.status === 'expiring';
             const hasActiveMem = mem && (mem.status === 'active' || mem.status === 'expiring');
             return (
               <div key={client.id} className={`bg-card border border-border rounded-xl p-5 hover:border-primary/40 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
@@ -315,12 +327,17 @@ export default function Clients() {
                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-400/20 text-red-400">Usuario sin membresía</span>
                    ) : (
                      <>
-                       <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-red-400/20 text-red-400' : 'bg-green-400/20 text-green-400'}`}>
-                         {isExpired ? 'Vencido' : 'Activo'}
+                       <span className={`text-xs px-2 py-0.5 rounded-full ${isExpired ? 'bg-orange-400/20 text-orange-400' : isExpiring ? 'bg-yellow-400/20 text-yellow-400' : 'bg-green-400/20 text-green-400'}`}>
+                         {isExpired ? 'Terminada' : isExpiring ? 'Por caducar' : 'Activo'}
                        </span>
                        <p className="text-xs text-muted-foreground">
                          {mem.plan_name}{mem.end_date ? ` · vence ${mem.end_date}` : ''}
                        </p>
+                       {isExpiring && (
+                         <p className="text-xs text-yellow-400 flex items-center gap-1 mt-1">
+                           <span>⚠</span> Membresía por caducar: {mem.accesos_restantes} acceso{mem.accesos_restantes === 1 ? '' : 's'} restante{mem.accesos_restantes === 1 ? '' : 's'}
+                         </p>
+                       )}
                      </>
                    )}
                  </div>
@@ -351,6 +368,7 @@ export default function Clients() {
                 const mem = getClientMembership(client.id);
                 const isInactive = client.active === false;
                 const isExpired = mem?.status === 'expired';
+                const isExpiring = mem?.status === 'expiring';
                 return (
                   <tr key={client.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3">
@@ -365,9 +383,12 @@ export default function Clients() {
                            ) : !mem ? (
                              <span className="text-xs text-red-400">Sin membresía</span>
                            ) : isExpired ? (
-                             <span className="text-xs text-red-400">Vencido</span>
-                           ) : (
-                             <span className="text-xs text-green-400">Activo</span>
+                           ) :   <span className="text-xs text-orange-400">Terminada</span>
+                           ) : ) : isExpiring ? (
+                           ) :   <span className="text-xs text-yellow-400">Por caducar</span>
+                           ) : ) : (
+                           ) :   <span className="text-xs text-green-400">Activo</span>
+                           ) : )
                            )}
                          </div>
                       </div>
