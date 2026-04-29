@@ -388,7 +388,7 @@ export default function Clients() {
                              <span className="text-xs text-yellow-400">Por caducar</span>
                            ) : (
                              <span className="text-xs text-green-400">Activo</span>
-                           )
+                           )}
                          </div>
                       </div>
                     </td>
