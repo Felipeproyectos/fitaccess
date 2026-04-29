@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -113,6 +114,25 @@ const LoginScreen = () => {
   );
 };
 
+const LogoutPage = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    logout(false);
+    navigate('/', { replace: true });
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: '#0a0a0a',
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <p style={{ color: 'white', fontSize: '16px' }}>Cerrando sesión...</p>
+    </div>
+  );
+};
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
@@ -131,6 +151,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/public-screen" element={<PublicScreen />} />
+      <Route path="/logout" element={<LogoutPage />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/clients" element={<Clients />} />
