@@ -383,13 +383,12 @@ export default function Clients() {
                            ) : !mem ? (
                              <span className="text-xs text-red-400">Sin membresía</span>
                            ) : isExpired ? (
-                           ) :   <span className="text-xs text-orange-400">Terminada</span>
-                           ) : ) : isExpiring ? (
-                           ) :   <span className="text-xs text-yellow-400">Por caducar</span>
-                           ) : ) : (
-                           ) :   <span className="text-xs text-green-400">Activo</span>
-                           ) : )
-                           )}
+                             <span className="text-xs text-orange-400">Terminada</span>
+                           ) : isExpiring ? (
+                             <span className="text-xs text-yellow-400">Por caducar</span>
+                           ) : (
+                             <span className="text-xs text-green-400">Activo</span>
+                           )
                          </div>
                       </div>
                     </td>
