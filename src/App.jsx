@@ -33,9 +33,9 @@ const LoadingScreen = () => (
       <circle cx="130" cy="100" r="8" fill="white"/>
     </svg>
     <h1 style={{ color: 'white', fontSize: '22px', fontWeight: 'bold', marginTop: '20px', letterSpacing: '2px' }}>
-      Byte Sur Soluciones Tecnologicas
+      BYTE SUR SOLUCIONES TECNOLÓGICAS
     </h1>
-    <p style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>Sistema FITACCESS - Control de asistencia</p>
+    <p style={{ color: '#aaa', fontSize: '14px', marginTop: '6px' }}>FitAccess — Control de asistencia de tu gimnasio</p>
     <div style={{
       width: '40px', height: '40px', border: '3px solid #333',
       borderTop: '3px solid white', borderRadius: '50%',
@@ -67,10 +67,10 @@ const LoginScreen = () => {
           <circle cx="145" cy="115" r="10" fill="white"/>
         </svg>
         <h1 style={{ color: 'white', fontSize: '26px', fontWeight: 'bold', margin: '16px 0 4px', letterSpacing: '1px' }}>
-          Byte Sur Soluciones Tecnologicas
+          BYTE SUR SOLUCIONES TECNOLÓGICAS
         </h1>
         <h2 style={{ color: '#888', fontSize: '15px', fontWeight: 'normal', margin: '0 0 8px' }}>
-          Sistema FITACCESS &mdash; Control de asistencia
+          FitAccess &mdash; Control de asistencia de tu gimnasio
         </h2>
         <div style={{ width: '60px', height: '2px', background: 'white', margin: '0 auto' }}/>
       </div>
@@ -92,18 +92,21 @@ const LoginScreen = () => {
           onMouseOver={e => e.target.style.background = '#e0e0e0'}
           onMouseOut={e => e.target.style.background = 'white'}
         >
-          Iniciar Sesion
+          Iniciar Sesión
         </button>
       </div>
 
       <div style={{ position: 'fixed', bottom: '20px', textAlign: 'center' }}>
         <p style={{ color: '#555', fontSize: '12px', margin: 0 }}>
-          Si deseas un Sistema asi o de otras caracteristicas contactanos
+          Sistema creado por Byte Sur SPA
         </p>
         <p style={{ color: '#555', fontSize: '12px', margin: '2px 0 0' }}>
-          <a href="https://www.bytesur.cl" style={{ color: '#777', textDecoration: 'none' }}>www.bytesur.cl</a>
-          {' '}&nbsp;+56982645747&nbsp;
-          hecho con carino &#10084; BYTE SUR
+          Contáctanos:{' '}
+          <a href="https://www.bytesur.cl" style={{ color: '#777', textDecoration: 'none' }}>WWW.BYTESUR.CL</a>
+          {' '}&nbsp;+56982645747
+        </p>
+        <p style={{ color: '#555', fontSize: '12px', margin: '2px 0 0' }}>
+          Byte Sur sistemas hechos con &#10084;
         </p>
       </div>
     </div>
