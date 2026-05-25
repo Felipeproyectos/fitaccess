@@ -1,8 +1,9 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -115,12 +116,8 @@ const LoginScreen = () => {
 };
 
 const LogoutPage = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
   useEffect(() => {
-    logout(false);
-    navigate('/', { replace: true });
+    base44.auth.logout(window.location.origin);
   }, []);
 
   return (
