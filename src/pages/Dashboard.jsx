@@ -42,8 +42,12 @@ export default function Dashboard() {
     const activeClientsCount = uniqueActiveClientIds.size;
 
     // Get expiring memberships (one per client, prefer earliest expiring)
+    // A membership is "expiring" if status is "expiring" OR if it has limited accesses <= 3
     const expiringByClient = {};
-    memberships.filter(m => m.status === "expiring").forEach(m => {
+    activeMemberships.forEach(m => {
+      const isExpiring = m.status === "expiring" || 
+        (typeof m.remaining_accesses === 'number' && m.remaining_accesses > 0 && m.remaining_accesses <= 3);
+      if (!isExpiring) return;
       if (!expiringByClient[m.client_id] || (m.end_date && expiringByClient[m.client_id].end_date && m.end_date < expiringByClient[m.client_id].end_date)) {
         expiringByClient[m.client_id] = m;
       }
