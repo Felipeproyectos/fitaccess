@@ -16,6 +16,7 @@ import Attendance from './pages/Attendance';
 import QRScanner from './pages/QRScanner';
 import GymSettings from './pages/GymSettings';
 import PublicScreen from './pages/PublicScreen';
+import Reports from './pages/Reports';
 
 const LoadingScreen = () => (
   <div style={{
@@ -156,6 +157,7 @@ const AuthenticatedApp = () => {
         <Route path="/payments" element={<Payments />} />
         <Route path="/scanner" element={<QRScanner />} />
         <Route path="/attendance" element={<Attendance />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<GymSettings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>

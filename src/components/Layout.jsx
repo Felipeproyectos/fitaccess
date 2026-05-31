@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor, ChevronLeft, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Dumbbell, QrCode, Activity, Settings, Menu, X, Monitor, ChevronLeft, LogOut, FileText } from "lucide-react";
 import { useState } from "react";
 import BottomNavigationBar from "@/components/BottomNavigationBar";
 
@@ -10,6 +10,7 @@ const nav = [
   { path: "/payments", label: "Pagos", icon: CreditCard },
 { path: "/scanner", label: "Validar QR", icon: QrCode },
   { path: "/attendance", label: "Asistencias", icon: Activity },
+  { path: "/reports", label: "Informes", icon: FileText },
   { path: "/settings", label: "Configuración", icon: Settings },
   ];
 
