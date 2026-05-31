@@ -1,26 +1,28 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Calendar, Users, Search, CreditCard, ClipboardList, DollarSign, AlertTriangle, Clock, UserCheck } from "lucide-react";
+import { Calendar, Users, Search, CreditCard, ClipboardList, DollarSign, AlertTriangle, Clock, UserCheck, Eye, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { toTitleCase } from "@/utils";
 import DateRangePicker from "@/components/reports/DateRangePicker";
-import ReportExportButtons from "@/components/reports/ReportExportButtons";
+import ReportPreviewModal from "@/components/reports/ReportPreviewModal";
 import {
-  generateDailyReport,
-  generateByClientReport,
-  generateMembershipsReport,
-  generatePaymentsReport,
-  generateClientsReport,
-  generateIncomeByMethodReport,
-  generateExpiringReport,
-  generatePendingPaymentsReport,
+  buildDailyReport,
+  buildByClientReport,
+  buildMembershipsReport,
+  buildPaymentsReport,
+  buildClientsReport,
+  buildIncomeByMethodReport,
+  buildExpiringReport,
+  buildPendingPaymentsReport,
 } from "@/utils/reportGenerators";
 
 export default function Reports() {
   const [gym, setGym] = useState(null);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(null);
+  const [preview, setPreview] = useState(null); // { title, filename, headers, rows }
 
   useEffect(() => {
     Promise.all([
@@ -52,40 +54,41 @@ export default function Reports() {
     });
   }
 
-  async function handleGenerate(type, fmt, dateFrom, dateTo, extra = {}) {
-    const key = `${type}-${fmt}`;
-    setLoading(key);
+  async function handlePreview(type, dateFrom, dateTo, extra = {}) {
+    setLoading(type);
     try {
       const { attendance, memberships, payments, clientMap, memMap } = await fetchAllData();
+      let result;
       switch (type) {
         case "daily":
-          generateDailyReport(filterByRange(attendance, dateFrom, dateTo), clientMap, memMap, gym, dateFrom, dateTo, fmt);
+          result = buildDailyReport(filterByRange(attendance, dateFrom, dateTo), clientMap, memMap, dateFrom, dateTo);
           break;
         case "by_client": {
           const filtered = filterByRange(attendance, dateFrom, dateTo);
           const data = extra.clientId ? filtered.filter(r => r.client_id === extra.clientId) : filtered;
-          generateByClientReport(data, clientMap, memMap, gym, dateFrom, dateTo, fmt, extra.clientId);
+          result = buildByClientReport(data, clientMap, memMap, dateFrom, dateTo, extra.clientId);
           break;
         }
         case "memberships":
-          generateMembershipsReport(filterByRange(memberships, dateFrom, dateTo, "start_date"), clientMap, gym, dateFrom, dateTo, fmt);
+          result = buildMembershipsReport(filterByRange(memberships, dateFrom, dateTo, "start_date"), clientMap, dateFrom, dateTo);
           break;
         case "payments":
-          generatePaymentsReport(filterByRange(payments, dateFrom, dateTo), clientMap, gym, dateFrom, dateTo, fmt);
+          result = buildPaymentsReport(filterByRange(payments, dateFrom, dateTo), clientMap, dateFrom, dateTo);
           break;
         case "income_method":
-          generateIncomeByMethodReport(filterByRange(payments, dateFrom, dateTo), gym, dateFrom, dateTo, fmt);
+          result = buildIncomeByMethodReport(filterByRange(payments, dateFrom, dateTo), dateFrom, dateTo);
           break;
         case "clients":
-          generateClientsReport(clients, memberships, payments, gym, fmt);
+          result = buildClientsReport(clients, memberships, payments);
           break;
         case "expiring":
-          generateExpiringReport(memberships, clientMap, gym, fmt);
+          result = buildExpiringReport(memberships, clientMap);
           break;
         case "pending_payments":
-          generatePendingPaymentsReport(payments, clientMap, gym, fmt);
+          result = buildPendingPaymentsReport(payments, clientMap);
           break;
       }
+      if (result) setPreview(result);
     } finally {
       setLoading(null);
     }
@@ -95,49 +98,59 @@ export default function Reports() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">Informes</h1>
-        <p className="text-muted-foreground mt-1">Genera reportes detallados en PDF o Excel</p>
+        <p className="text-muted-foreground mt-1">Previsualiza y descarga reportes en PDF o Excel</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Con rango de fechas */}
         <DatedReportCard id="daily" title="Asistencia Diaria" description="Detalle día a día con hora, cliente, plan y resultado"
           icon={Calendar} color="text-green-400" bg="bg-green-400/10"
-          loading={loading} onGenerate={(fmt, from, to) => handleGenerate("daily", fmt, from, to)} />
+          loading={loading} onPreview={(from, to) => handlePreview("daily", from, to)} />
 
         <ClientReportCard loading={loading} clients={clients}
-          onGenerate={(fmt, from, to, clientId) => handleGenerate("by_client", fmt, from, to, { clientId })} />
+          onPreview={(from, to, clientId) => handlePreview("by_client", from, to, { clientId })} />
 
         <DatedReportCard id="memberships" title="Membresías" description="Membresías creadas en el rango con estado y detalles"
           icon={ClipboardList} color="text-blue-400" bg="bg-blue-400/10"
-          loading={loading} onGenerate={(fmt, from, to) => handleGenerate("memberships", fmt, from, to)} />
+          loading={loading} onPreview={(from, to) => handlePreview("memberships", from, to)} />
 
         <DatedReportCard id="payments" title="Pagos" description="Listado de pagos con montos, método y confirmación"
           icon={CreditCard} color="text-emerald-400" bg="bg-emerald-400/10"
-          loading={loading} onGenerate={(fmt, from, to) => handleGenerate("payments", fmt, from, to)} />
+          loading={loading} onPreview={(from, to) => handlePreview("payments", from, to)} />
 
         <DatedReportCard id="income_method" title="Ingresos por Método" description="Ingresos confirmados agrupados por método de pago"
           icon={DollarSign} color="text-yellow-400" bg="bg-yellow-400/10"
-          loading={loading} onGenerate={(fmt, from, to) => handleGenerate("income_method", fmt, from, to)} />
+          loading={loading} onPreview={(from, to) => handlePreview("income_method", from, to)} />
 
-        {/* Sin rango de fechas */}
         <SimpleReportCard id="expiring" title="Membresías Vencidas" description="Membresías expiradas y por vencer"
           icon={AlertTriangle} color="text-orange-400" bg="bg-orange-400/10"
-          loading={loading} onGenerate={(fmt) => handleGenerate("expiring", fmt)} />
+          loading={loading} onPreview={() => handlePreview("expiring")} />
 
         <SimpleReportCard id="pending_payments" title="Pagos Pendientes" description="Pagos sin confirmar"
           icon={Clock} color="text-red-400" bg="bg-red-400/10"
-          loading={loading} onGenerate={(fmt) => handleGenerate("pending_payments", fmt)} />
+          loading={loading} onPreview={() => handlePreview("pending_payments")} />
 
         <SimpleReportCard id="clients" title="Clientes Completo" description="Todos los clientes con membresía, último pago y contacto"
           icon={UserCheck} color="text-purple-400" bg="bg-purple-400/10"
-          loading={loading} onGenerate={(fmt) => handleGenerate("clients", fmt)} />
+          loading={loading} onPreview={() => handlePreview("clients")} />
       </div>
+
+      {preview && (
+        <ReportPreviewModal data={preview} gym={gym} onClose={() => setPreview(null)} />
+      )}
     </div>
   );
 }
 
-// Tarjeta con rango de fechas integrado
-function DatedReportCard({ id, title, description, icon: Icon, color, bg, loading, onGenerate }) {
+function PreviewButton({ id, loading, onClick }) {
+  return (
+    <Button size="sm" className="w-full bg-primary hover:bg-primary/90 gap-1.5" disabled={!!loading} onClick={onClick}>
+      {loading === id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+      Previsualizar
+    </Button>
+  );
+}
+
+function DatedReportCard({ id, title, description, icon: Icon, color, bg, loading, onPreview }) {
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
 
@@ -153,13 +166,12 @@ function DatedReportCard({ id, title, description, icon: Icon, color, bg, loadin
         </div>
       </div>
       <DateRangePicker dateFrom={dateFrom} dateTo={dateTo} setDateFrom={setDateFrom} setDateTo={setDateTo} />
-      <ReportExportButtons id={id} loading={loading} onGenerate={(fmt) => onGenerate(fmt, dateFrom, dateTo)} />
+      <PreviewButton id={id} loading={loading} onClick={() => onPreview(dateFrom, dateTo)} />
     </div>
   );
 }
 
-// Tarjeta sin rango de fechas
-function SimpleReportCard({ id, title, description, icon: Icon, color, bg, loading, onGenerate }) {
+function SimpleReportCard({ id, title, description, icon: Icon, color, bg, loading, onPreview }) {
   return (
     <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between gap-4 hover:border-primary/40 transition-colors">
       <div className="flex items-start gap-3">
@@ -171,13 +183,12 @@ function SimpleReportCard({ id, title, description, icon: Icon, color, bg, loadi
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         </div>
       </div>
-      <ReportExportButtons id={id} loading={loading} onGenerate={onGenerate} />
+      <PreviewButton id={id} loading={loading} onClick={onPreview} />
     </div>
   );
 }
 
-// Tarjeta de asistencia por cliente con selector + fechas
-function ClientReportCard({ loading, clients, onGenerate }) {
+function ClientReportCard({ loading, clients, onPreview }) {
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
   const [selectedClientId, setSelectedClientId] = useState("");
@@ -227,8 +238,8 @@ function ClientReportCard({ loading, clients, onGenerate }) {
         )}
       </div>
 
-      <ReportExportButtons id="by_client" loading={loading}
-        onGenerate={(fmt) => onGenerate(fmt, dateFrom, dateTo, selectedClientId)} />
+      <PreviewButton id="by_client" loading={loading}
+        onClick={() => onPreview(dateFrom, dateTo, selectedClientId)} />
     </div>
   );
 }
