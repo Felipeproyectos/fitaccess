@@ -25,9 +25,7 @@
         "limited",
         "weekly",
         "monthly",
-        "custom",
-        "free_pass",
-        "single_pass"
+        "custom"
       ],
       "title": "Tipo"
     },

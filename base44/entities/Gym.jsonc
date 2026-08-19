@@ -43,5 +43,11 @@
   },
   "required": [
     "name"
-  ]
+  ],
+  "rls": {
+    "read": {},
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
 }
