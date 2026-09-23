@@ -1,0 +1,38 @@
+{
+  "name": "Limpiar m\u00e9todo de pago al expirar membres\u00eda",
+  "description": "",
+  "trigger": {
+    "condition": "${ (.trigger.data.status == \"expired\" or .trigger.data.status == \"pending\") }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update",
+        "delete"
+      ],
+      "entity_name": "Membership"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "limpiar_m_todo_de_pago_al_expirar_membres_a",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncClientPaymentMethod",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "syncClientPaymentMethod"
+  }
+}
